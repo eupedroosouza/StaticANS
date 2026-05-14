@@ -42,7 +42,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef __BINDEC__
 #define __BINDEC__
 
-#include "CommonLib/ContextModel.h"
+#include "Lib/CommonLib/ContextModel.h"
 #include <iostream>
 
 

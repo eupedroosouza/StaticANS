@@ -43,8 +43,11 @@
 # binary files
 *.bin
 
-#txt files
-*.txt
-
 #numpy files
 *.npz
+
+# jetbrains ide's
+.idea/
+
+# cmake
+cmake-*/

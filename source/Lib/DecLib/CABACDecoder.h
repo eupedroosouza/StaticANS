@@ -4,10 +4,10 @@
 #include <vector>
 #include <algorithm>
 
-#include "CommonLib/ContextModel.h"
-#include "CommonLib/ContextModeler.h"
-#include "CommonLib/Quant.h"
-#include "CommonLib/Scan.h"
+#include "Lib/CommonLib/ContextModel.h"
+#include "Lib/CommonLib/ContextModeler.h"
+#include "Lib/CommonLib/Quant.h"
+#include "Lib/CommonLib/Scan.h"
 #include "BinDecoder.h"
 
 class BACDecoder
