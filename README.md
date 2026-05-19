@@ -1,18 +1,19 @@
-# StaticBAC – Neural Network Tensor Compression with Static Binary Arithmetic Coding
+# deepANS – Neural Network Tensor Compression with Asymmetric Numeral Systems (ANS)
 
 ## Overview
 
-**StaticBAC** is a research-oriented tool for compressing neural network models using **static binary arithmetic coding (BAC)**.
-Its main target is to compress already quantized models in INT8 (preferrably). It supports from INT4, to INT32, in steps of 4. 
-Internally, the software uses INT32 for all variables. 
+**deepANS** is a research-oriented tool forked of [StaticBAC](https://github.com/Jiovana/StaticBAC) (a NN tensor compression with Static Binary Arithmetic Coding (StaticBAC)).
+The main target is same of StaticBAC: compress already quantized models in INT8 (preferrably) also  supporting  INT4, to INT32, in steps of 4. But, now using the **Asymmetric Numeral Systems** (ASN) coding, more specific the implementations: range-ANS (rANS) and tabled-ANS (tANS).
 
 The research pipeline:
+
 1. Extract tensors from a trained model (PyTorch / HuggingFace / Torchvision)
 2. Quantize weights and biases to fixed-point representations
-3. Encode tensors into binary streams using a static entropy model
-4. Optionally decode the bitstream to reconstruct the model
+3. Encode tensors based on static context with ANS
+4. Optionally decode to reconstruct the model
 
 This framework is designed for:
+
 - Studying entropy coding efficiency on NN weights
 - Evaluating compression vs. distortion trade-offs
 - Hardware-oriented research (e.g., CABAC-like implementations)
@@ -21,7 +22,7 @@ This framework is designed for:
 
 ## Features
 
-- Static **binary arithmetic coding (BAC)** 
+- **Assymetric Numeral Systems (ANS)** Coding
 - Separate **encode / decode modes**
 - Metadata-driven reconstruction
 - Tensor-level statistics and performance reporting
@@ -30,49 +31,45 @@ This framework is designed for:
 
 ## Repository Structure
 
-
-StaticBAC/
+deepANS/
 │
 ├── source/ # C++ source code (encoder/decoder)
-├── python/ # Python preprocessing (model export & quantization)
-├── build/ # Build directory
-├── models/ # Input models
+├── python/ # Python preprocessing (tables create & model export & quantization)
 └── README.md
 
-Main file is test_model_args.cpp
----
+Main file is **source/Entrypoint.cpp**.
 
-## Requirements
+## Build
 
-### C++ (Core codec)
+### Requirements
+
+#### C++ (Core codec)
+
 - C++17 compatible compiler
-- CMake ≥ 3.10
+- CMake ≥ 3.13
 
-### Python (Model export)
+#### Python (Model export)
+
 - Python ≥ 3.8
 - Required packages:
-    -- numpy
-    -- torch
-    -- torchvision
-    -- transformers
-    -- tqdm
+  -- numpy
+  -- torch
+  -- torchvision
+  -- transformers
+  -- tqdm
 
-
----
-
-## Build Instructions
+### Building
 
 ```bash
 git clone <repo_url>
-cd StaticBAC
+cd deepANS
 mkdir build
 cd build
 cmake ..
-make
- 
+cmake --build .
 ```
 
-This generates the executable (e.g., StaticBAC).
+This generates the executable (e.g., deepANS).
 
 ### Python: Export and Quantize Model
 
@@ -82,13 +79,15 @@ Binary tensor files (.bin)
 Metadata file (tensor.meta)
 
 Example
+
 ```bash
 python create_meta.py \
     --model resnet50 \
     --source torchvision \
     --weights ResNet50_Weights.DEFAULT \
     --out_dir ./models/resnet50
-``` 
+```
+
 Output:
 models/resnet50/
 ├── binaries/
@@ -105,24 +104,35 @@ The codec supports:
 - Decoding only
 - Full encode → decode pipeline
 
-**Encode**
-./StaticBAC \
+**Only Encode**
+
+```shell
+./deepANS \
     --encode \
     --binaries ./models/resnet50/binaries \
     --meta ./models/resnet50/tensor.meta \
     --bitstream output.bin
-**Decode**
-./StaticBAC \
+```
+
+**Only Decode**
+
+```shell
+./deepANS \
     --decode \
     --bitstream output.bin \
     --out_dir ./decoded_model
+```
+
 **Encode + Decode**
-./StaticBAC \
+
+```shell
+./deepANS \
     --encode --decode \
     --binaries ./models/resnet50/binaries \
     --meta ./models/resnet50/tensor.meta \
     --bitstream output.bin \
     --out_dir ./decoded_model
+```
 
 ### Metadata Format
 
@@ -135,11 +145,13 @@ Example
 0 layer1.weight weight 8 4 64 3 7 7 0.0231
 
 This enables:
+
 - Correct reconstruction of tensor shapes
 - Proper dequantization
 - Mapping back to model structure
 
 ### Quantization Strategy
+
 Weights → 8-bit optimal uniform quantization
 Bias / other tensors → 12-bit quantization
 Small tensors (<32 elements) → higher precision
@@ -159,19 +171,18 @@ Compression ratio
 Entropy (bits/symbol)
 Throughput (MB/s)
 
-
 ### Notes
+
 Tensor names are preserved to simplify reconstruction
 Minimal filename sanitization is recommended (/ and \ replaced) - in create_meta
 Decoding reconstructs quantized tensors (not original float values)
 
 ### Future Work
-* Might update static RLPS 
+
+* Might update static RLPS
 * Exploit tensor semantics to improve contexts
 * Parallel chunk processing to speed up encoder, also important for hardware implementation.
 * Change BAC to ANS
-
-
 
 ### Acknowledgements
 
