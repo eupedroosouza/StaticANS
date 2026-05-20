@@ -1,0 +1,130 @@
+# ANS Tables
+#
+# The values of frequencies are extracted from StaticBAC (https://github.com/Jiovana/StaticBAC/blob/main/source/Lib/CommonLib/ContextModel.cpp)
+# Based on MPS (most probable symbol) and RLPS (range lost probable symbol).
+# Considering M = 256 (8 bits), to define a frequency to another symbol (the opposite of RLPS - you need see MPS to check which opposite symbol) use F = 256 - RLPS.
+# Some values were inverted because the frequency didn't make much sense, like an MPS = 0 but your respective RLPS = 223 (yes, the frequency of MPS was smaller of LPS)
+#
+# Format:
+# tables:
+#   name_of_table:
+#     symbols:
+#     - symbol_a: freq_a
+#       symbol_b: freq_b
+#       ...
+#       symbol_n: freq_n
+#
+# * If you want to use this to generate a new tables to deepANS don't modify the tables names,
+#   only set the frequencies (the deepANS wait the tables with that specific names)
+# * To use that with deepANS export table as binary (python create_table.py --alphabet
+#   <this_file> --bin <binary_table_file_name> ) and add deepANS argument --table <binary_table_file_name>
+
+tables:
+  ep:
+    alphabet:
+      - 0: 128
+        1: 128
+  ctx_w_0:
+    alphabet:
+      - 0: 44
+        1: 212
+  ctx_w_1:
+    alphabet:
+      - 0: 65
+        1: 191
+  ctx_w_2: # inversed in relation of StaticBAC to avoid confusion
+    alphabet:
+      - 0: 37
+        1: 219
+  ctx_w_3:
+    alphabet:
+      - 0: 223
+        1: 33
+  ctx_w_4:
+    alphabet:
+      - 0: 59
+        1: 197
+  ctx_w_5:
+    alphabet:
+      - 0: 105
+        1: 151
+  ctx_w_6:
+    alphabet:
+      - 0: 246
+        1: 10
+  ctx_w_7:
+    alphabet:
+      - 0: 230
+        1: 26
+  ctx_w_8:
+    alphabet:
+      - 0: 215
+        1: 41
+  ctx_w_9:
+    alphabet:
+      - 0: 200
+        1: 56
+  ctx_w_11:
+    alphabet:
+      - 0: 184
+        1: 72
+  ctx_w_12:
+    alphabet:
+      - 0: 169
+        1: 87
+  ctx_w_13: # inversed in relation of StaticBAC to avoid confusion
+    alphabet:
+      - 0: 102
+        1: 154
+  ctx_b_0:
+    alphabet:
+      - 0: 27
+        1: 229
+  ctx_b_1:
+    alphabet:
+      - 0: 10
+        1: 246
+  ctx_b_2:
+    alphabet:
+      - 0: 38
+        1: 218
+  ctx_b_3: # inversed in relation of StaticBAC to avoid confusion
+    alphabet:
+      - 0: 47
+        1: 209
+  ctx_b_4:
+    alphabet:
+      - 0: 42
+        1: 214
+  ctx_b_5:
+    alphabet:
+      - 0: 38
+        1: 218
+  ctx_b_6:
+    alphabet:
+      - 0: 241
+        1: 15
+  ctx_b_7:
+    alphabet:
+      - 0: 210
+        1: 46
+  ctx_b_8:
+    alphabet:
+      - 0: 174
+        1: 82
+  ctx_b_9:
+    alphabet:
+      - 0: 128
+        1: 128
+  ctx_b_10: # inversed in relation of StaticBAC to avoid confusion
+    alphabet:
+      - 0: 102
+        1: 154
+  ctx_b_11: # inversed in relation of StaticBAC to avoid confusion
+    alphabet:
+      - 0: 77
+        1: 179
+  ctx_b_12:
+    alphabet:
+      - 0: 102
+        1: 154
