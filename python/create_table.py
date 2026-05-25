@@ -1,6 +1,7 @@
 import argparse
 import csv
 import os.path
+import struct
 from pathlib import Path
 
 import numpy as np
@@ -8,36 +9,47 @@ import yaml
 
 
 class Table:
-    def __init__(self, name: str, alphabet: dict[int, int]):
-        self.name = name
+    def __init__(self, type: int, id: int, alphabet: dict[int, int]):
+        self.type = type
+        self.id = id
         self.alphabet = alphabet
 
 
 class TableResult:
-    def __init__(self, table: Table, states: dict[int, list[int]], bitstreams: dict[int, list[list[int]]]):
+    def __init__(self, table: Table, states: dict[int, list[int]], bitstreams: dict[int, list[tuple[int, int]]]):
         self.table = table
         self.states = states
         self.bitstreams = bitstreams
 
 
-def read_alphabet(filename: str) -> dict[str, Table]:
+def read_alphabet(filename: str) -> list[Table]:
     path = Path(filename)
     if not path.exists() or (not path.is_file()):
         raise FileNotFoundError(f"File {filename} does not exist")
 
-    tables: dict[str, Table] = {}
+    tables: list[Table] = []
     with(open(filename, "r", encoding="utf-8")) as file:
         configuration = yaml.safe_load(file) or {}
 
-        tables = configuration["tables"]
-        for table_name, node in tables.items():
+        tables_node = configuration["tables"]
+        for node in tables_node:
+            type = np.uint8(node["type"])
+            id = np.uint(node["id"])
             alphabet: dict[int, int] = {}
             alphabet_node = node["alphabet"]
             for symbol_node in alphabet_node:
                 for k, v in symbol_node.items():
                     alphabet[int(k)] = int(v)
-            tables[table_name] = Table(table_name, alphabet)
+            tables.append(Table(type, id, alphabet))
             pass
+        # for table_name, node in tables.items():
+        #     alphabet: dict[int, int] = {}
+        #     alphabet_node = node["alphabet"]
+        #     for symbol_node in alphabet_node:
+        #         for k, v in symbol_node.items():
+        #             alphabet[int(k)] = int(v)
+        #     tables[table_name] = Table(table_name, alphabet)
+        #     pass
 
     return tables
 
@@ -51,12 +63,12 @@ def create_table(table: Table) -> TableResult:
     # print(output_states)
     # print(output_bitstreams)
 
-    print(f"Generated table {table.name}")
+    print(f"Generated table {table.type}/{table.id}")
     return TableResult(table, output_states, output_bitstreams)
 
 
 def save_table_as_csv(table_result: TableResult, dir_csv: Path):
-    filename = Path(os.path.join(dir_csv, f"{table_result.table.name}.csv"))
+    filename = Path(os.path.join(dir_csv, f"{table_result.table.type}_{table_result.table.id}.csv"))
 
     if filename.exists():
         raise FileExistsError(f"File {filename} already exists")
@@ -67,6 +79,7 @@ def save_table_as_csv(table_result: TableResult, dir_csv: Path):
     fields.append("")
     fields.append("state")
     for key in table_result.table.alphabet.keys():
+        fields.append("size")
         fields.append(str(key))
 
     rows: list[list[str]] = []
@@ -78,10 +91,12 @@ def save_table_as_csv(table_result: TableResult, dir_csv: Path):
         row.append("")
         row.append(str(state))
         for bs in table_result.bitstreams[state]:
-            stringed_bs = ""
-            for b in bs:
-                stringed_bs += str(b)
-            row.append(stringed_bs)
+            row.append(f"{bs[0]}")
+            if bs[0] == 0:
+                row.append("")
+            else:
+                row.append(format(f"{bs[1]:b}"))
+
         rows.append(row)
 
     with open(filename, "w", encoding="utf-8", newline="") as file:
@@ -89,90 +104,69 @@ def save_table_as_csv(table_result: TableResult, dir_csv: Path):
         writer.writerow(fields)
         writer.writerows(rows)
 
-        print(f"Saved table {table_result.table.name} to CSV file: {filename}.")
+        print(f"Saved table {table_result.table.type}/{table_result.table.id} to CSV file: {filename}.")
     pass
 
 
-# The format
-# [rows - int32][columns - int32][states... int32][bitstreams... int32]
-def save_table_as_binary(table_result: TableResult, bin_file: Path):
-    pass
-    # path = Path(out_filename)
-    # if path.exists():
-    #     raise FileNotFoundError(f"File {out_filename} already exists")
-    #
-    # rows = np.sum(list(states.keys())).astype(np.int32)
-    # columns = np.sum(list(alphabet.keys())).astype(np.int32)
-    #
-    # flat_states = [item for sublist in states.values() for item in sublist]
-    # flat_bitstreams = [item for lists in bitstreams.values() for sublist in lists for item in sublist]
-    #
-    # barr = bytearray(8 + (2 * (rows * columns * 8)))
-    # offset = 0
-    # struct.pack_into("<II", barr, 0, rows, columns)
-    # offset += 8
-    #
-    # for row in range(rows):
-    #     for column in range(columns):
-    #         data = states[row][column]
+def save_tables_as_binary(results: list[TableResult], bin_file: Path | str):
+    path = Path(bin_file)
+    if path.exists():
+        raise FileExistsError(f"File {bin_file} already exists")
 
+    with open(path, "wb") as file:
 
-def generate_table_as_cpp_maps(table_result: TableResult) -> str:
-    cpp_code = []
-    name = table_result.table.name
-    prefix = f"{name}_"
+        file.write(struct.pack("<I", len(results)))
 
-    states_def = f"const std::map<uint16_t, std::map<int8_t, uint16_t> > {prefix}states = {{\n"
-    for state, next_states in table_result.states.items():
-        # Transform the Python list on [next_0, next_1] em {{0, next_0}, {1, next_1}}
-        inner_pairs = []
-        for symbol, next_state in enumerate(next_states):
-            inner_pairs.append(f"{{{symbol}, {next_state}}}")
+        for table in results:
+            if not table.states or not table.bitstreams:
+                raise RuntimeError(f"Table {table.table.type}/${table.table.id} is empty.")
 
-        states_def += f"    {{{state}, {{{', '.join(inner_pairs)}}}}},\n"
-    states_def += "};\n"
-    cpp_code.append(states_def)
+            file.write(struct.pack("<B", table.table.type))
+            file.write(struct.pack("<B", table.table.id))
 
-    bits_def = f"const std::map<uint16_t, std::map<int8_t, std::vector<uint8_t> > > {prefix}bitstreams = {{\n"
-    for state, symbol_bits in table_result.bitstreams.items():
-        inner_pairs = []
-        for symbol, bits in enumerate(symbol_bits):
-            # Transform the list of bits [1, 0]  on string {1, 0}
-            bits_str = ", ".join(str(b) for b in bits)
-            inner_pairs.append(f"{{{symbol}, {{{bits_str}}}}}")
+            first_state_key = next(iter(table.states))
+            symbols_size = len(table.states[first_state_key])
+            file.write(struct.pack("<B", symbols_size))
 
-        bits_def += f"    {{{state}, {{{', '.join(inner_pairs)}}}}},\n"
-    bits_def += "};\n"
-    cpp_code.append(bits_def)
+            total = sum(table.table.alphabet.values())
+            file.write(struct.pack("<H", total))
 
-    table_instantiation = f"Table {name}({prefix}states, {prefix}bitstreams);\n"
-    cpp_code.append(table_instantiation)
+            for state, next_states in table.states.items():
+                bitstream = table.bitstreams[state]
+                for i, next_state in enumerate(next_states):
+                    file.write(struct.pack("<H", next_state))
+                    bs = bitstream[i]
+                    file.write(struct.pack("<B", bs[0]))
+                    file.write(struct.pack("<B", bs[1]))
 
-    return "\n".join(cpp_code)
+    print(f"Saved binary tables on {bin_file}.")
 
 
 # tANS
 def create_encoder_table(total: int, alphabet: dict[int, int], cumulative: list[int]) -> tuple[
-    dict[int, list[int]], dict[int, list[list[int]]]]:
+    dict[int, list[int]], dict[int, list[tuple[int, int]]]]:
     output_states: dict[int, list[int]] = {}
-    output_bitstreams: dict[int, list[list[int]]] = {}
+    output_bitstreams: dict[int, list[tuple[int, int]]] = {}
     r_max = (2 * total)
     for i_state in range(total, r_max, 1):
         symbols_states: list[int] = []
-        symbols_bitstreams: list[list[int]] = []
+        symbols_bitstreams: list[tuple[int, int]] = []
         for s, s_freq in alphabet.items():
 
             state = i_state
-            bitstream: list[int] = []
+            bitstream_size: int = 0
+            bitstream: int = 0
 
             while state >= (2 * alphabet[s]):
-                bitstream.append(state % 2)
+                rem = state % 2
+                bitstream = bitstream | (rem << bitstream_size)
+                bitstream_size += 1
                 state = int(state / 2)
 
             state = encode_rANS(total, cumulative, alphabet, s, state)
 
             symbols_states.append(state)
-            symbols_bitstreams.append(bitstream)
+            symbols_bitstreams.append((bitstream_size, bitstream))
         output_states[i_state] = symbols_states
         output_bitstreams[i_state] = symbols_bitstreams
 
@@ -190,7 +184,7 @@ def streaming_encode_rANS(total: int, cumulative: list[int], alphabet: dict[int,
     for s in s_input:
         while state >= (2 * alphabet[s]):
             bitstream.append(state % 2)
-            state = state / 2
+            state = int(state / 2)
 
         state = encode_rANS(total, cumulative, alphabet, s, state)  # The rANS encoding step
 
@@ -238,51 +232,38 @@ def main():
     parser.add_argument("--alphabet", required=True, help="Alphabet file")
     parser.add_argument("--csv", required=False, help="CSV save directory")
     parser.add_argument("--bin", required=False, help="Binary (.bin) save file")
-    parser.add_argument("--c", required=False, help="C (.h) save file")
 
     args = parser.parse_args()
-    tables: dict[str, Table] = read_alphabet(args.alphabet)
+    tables: list[Table] = read_alphabet(args.alphabet)
     if tables is None:
         return
 
     dir_csv: Path | None = None
     if args.csv is not None:
         dir_csv = Path(args.csv)
+        if dir_csv is None:
+            return
         if dir_csv.exists() and not dir_csv.is_dir():
             raise RuntimeError(f"{dir_csv} is not a directory")
         if not dir_csv.exists():
             dir_csv.mkdir(parents=True)
         pass
 
+    res: list[TableResult] = []
     results: dict[Table, TableResult] = {}
-    for table_name, table in tables.items():
+    for table in tables:
         result = create_table(table)
         results[table] = result
+        res.append(result)
         if not dir_csv is None:
             save_table_as_csv(result, dir_csv)
-    print("Done.")
 
-    bin_file: Path | None = None
     if args.bin is not None:
         bin_file = Path(args.bin)
-        if bin_file.exists():
-            raise RuntimeError(f"{bin_file} already exists")
+        save_tables_as_binary(res, bin_file)
         pass
 
-    if args.c is not None:
-        c_file = Path(args.c)
-        if c_file.exists():
-            raise RuntimeError(f"{bin_file} already exists")
-
-        final_string = "\n"
-        for table, result in results.items():
-            final_string += generate_table_as_cpp_maps(result)
-            final_string += "\n"
-            pass
-        final_string += "\n"
-
-        with open(c_file, "w", encoding="utf-8") as f:
-            f.write(final_string)
+    print("Done.")
 
     pass
 

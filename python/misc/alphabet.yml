@@ -7,12 +7,17 @@
 #
 # Format:
 # tables:
-#   name_of_table:
+#   - type: type_of_table
+#      id: id_of_table
 #     symbols:
 #     - symbol_a: freq_a
 #       symbol_b: freq_b
 #       ...
 #       symbol_n: freq_n
+#
+# Types:
+#  0 => Weights
+#  1 => Bias
 #
 # * If you want to use this to generate a new tables to deepANS don't modify the tables names,
 #   only set the frequencies (the deepANS wait the tables with that specific names)
@@ -20,111 +25,138 @@
 #   <this_file> --bin <binary_table_file_name> ) and add deepANS argument --table <binary_table_file_name>
 
 tables:
-  ep:
-    alphabet:
-      - 0: 128
-        1: 128
-  ctx_w_0:
+  - type: 0
+    id: 0
     alphabet:
       - 0: 44
         1: 212
-  ctx_w_1:
+  - type: 0
+    id: 1
     alphabet:
       - 0: 65
         1: 191
-  ctx_w_2: # inversed in relation of StaticBAC to avoid confusion
+  # inversed in relation of StaticBAC to avoid confusion
+  - type: 0
+    id: 2
     alphabet:
       - 0: 37
         1: 219
-  ctx_w_3:
+  - type: 0
+    id: 3
     alphabet:
       - 0: 223
         1: 33
-  ctx_w_4:
+  - type: 0
+    id: 4
     alphabet:
       - 0: 59
         1: 197
-  ctx_w_5:
+  - type: 0
+    id: 5
     alphabet:
       - 0: 105
         1: 151
-  ctx_w_6:
+  - type: 0
+    id: 6
     alphabet:
       - 0: 246
         1: 10
-  ctx_w_7:
+  - type: 0
+    id: 7
     alphabet:
       - 0: 230
         1: 26
-  ctx_w_8:
+  - type: 0
+    id: 8
     alphabet:
       - 0: 215
         1: 41
-  ctx_w_9:
+  - type: 0
+    id: 9
     alphabet:
       - 0: 200
         1: 56
-  ctx_w_11:
+  - type: 0
+    id: 11
     alphabet:
       - 0: 184
         1: 72
-  ctx_w_12:
+  - type: 0
+    id: 12
     alphabet:
       - 0: 169
         1: 87
-  ctx_w_13: # inversed in relation of StaticBAC to avoid confusion
+  # inversed in relation of StaticBAC to avoid confusion
+  - type: 0
+    id: 13
     alphabet:
       - 0: 102
         1: 154
-  ctx_b_0:
+  - type: 1
+    id: 0
     alphabet:
       - 0: 27
         1: 229
-  ctx_b_1:
+  - type: 1
+    id: 1
     alphabet:
       - 0: 10
         1: 246
-  ctx_b_2:
+  - type: 1
+    id: 2
     alphabet:
       - 0: 38
         1: 218
-  ctx_b_3: # inversed in relation of StaticBAC to avoid confusion
+  # inversed in relation of StaticBAC to avoid confusion
+  - type: 1
+    id: 3
     alphabet:
       - 0: 47
         1: 209
-  ctx_b_4:
+  - type: 1
+    id: 4
     alphabet:
       - 0: 42
         1: 214
-  ctx_b_5:
+  - type: 1
+    id: 5
     alphabet:
       - 0: 38
         1: 218
-  ctx_b_6:
+  - type: 1
+    id: 6
     alphabet:
       - 0: 241
         1: 15
-  ctx_b_7:
+  - type: 1
+    id: 7
     alphabet:
       - 0: 210
         1: 46
-  ctx_b_8:
+  - type: 1
+    id: 8
     alphabet:
       - 0: 174
         1: 82
-  ctx_b_9:
+  - type: 1
+    id: 9
     alphabet:
       - 0: 128
         1: 128
-  ctx_b_10: # inversed in relation of StaticBAC to avoid confusion
+  # inversed in relation of StaticBAC to avoid confusion
+  - type: 1
+    id: 10
     alphabet:
       - 0: 102
         1: 154
-  ctx_b_11: # inversed in relation of StaticBAC to avoid confusion
+  # inversed in relation of StaticBAC to avoid confusion
+  - type: 1
+    id: 11
     alphabet:
       - 0: 77
         1: 179
-  ctx_b_12:
+  - type: 1
+    id: 12
     alphabet:
       - 0: 102
         1: 154
