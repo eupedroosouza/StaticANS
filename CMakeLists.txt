@@ -6,15 +6,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(SOURCES
+        source/deepANS.cpp
         source/StaticCoder.cpp
         source/Lib/Utils/global_logger.cpp
+        source/Lib/Utils/Bitstream.h
         source/Lib/EncLib/CABACEncoder.cpp
         source/Lib/EncLib/BinEncoder_simple.cpp
         source/Lib/DecLib/CABACDecoder.cpp
         source/Lib/DecLib/BinDecoder.cpp
         source/Lib/CommonLib/ContextModel.cpp
         source/Lib/CommonLib/ContextModeler.cpp
-        source/Lib/Test/test_model_args.cpp
+        source/Lib/CommonLib/TabledANS.h
+        source/Lib/CommonLib/UniformRangeANS.h
+        source/Lib/Test/test_ans_coding.cpp
 )
 
 add_executable(deepANS ${SOURCES})

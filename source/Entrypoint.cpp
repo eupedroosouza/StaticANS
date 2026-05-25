@@ -139,12 +139,12 @@ Based on DeepCABAC and NNCodec https://github.com/d-becking/nncodec2
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "../EncLib/CABACEncoder.h"  // your header
-#include "../EncLib/BinEncoder_simple.h"
-#include "../CommonLib/ContextModel.h"
-#include "../../StaticCoder.h"
-#include "../CommonLib/TypeDef.h"
-#include "../DecLib/CABACDecoder.h"
+#include "Lib/EncLib/CABACEncoder.h"  // your header
+#include "Lib/EncLib/BinEncoder_simple.h"
+#include "Lib/CommonLib/ContextModel.h"
+#include "StaticCoder.h"
+#include "Lib/CommonLib/TypeDef.h"
+#include "Lib/DecLib/CABACDecoder.h"
 
 #include <string>
 #include <algorithm>
@@ -546,7 +546,7 @@ bool parseArgs(int argc, char* argv[])
 // ------------------------------------------------------------
 // MAIN
 // ------------------------------------------------------------
-int main_2(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
     if(!parseArgs(argc, argv))
     {
