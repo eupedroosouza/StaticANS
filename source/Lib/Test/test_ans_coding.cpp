@@ -103,7 +103,7 @@ void testTANS() {
     std::string decodedSymbols;
     BitstreamReader reader(writer.bitstream, offset);
     uint16_t decodedState = state;
-    for (int i = 12; i > 0; i--) {
+    for (int i = 17; i > 0; i--) {
         auto [previosState, symbol] = table->decode(decodedState, reader);
         decodedState = previosState;
         if (i == 1) {

@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <cstdint>
 #include <list>
 #include <map>
@@ -41,6 +42,7 @@ public:
 class DecodeState {
 public:
     std::int8_t symbol = -1;
+    std::uint8_t maximumReadSizeFromBitstream = 0;
     std::map<uint16_t, StateBitstream> states = {};
 
     DecodeState() = default;
@@ -70,13 +72,36 @@ public:
                     this->decodeStates[nextState] = DecodeState(symbol);
                 }
 
+                DecodeState &decodeState = this->decodeStates[nextState];
                 if (state.bitstreams.empty()) {
-                    this->decodeStates[nextState].states[currentState] = {};
+                    decodeState.states[currentState] = {};
+                    decodeState.maximumReadSizeFromBitstream = 0;
                     continue;
                 }
 
                 const StateBitstream &stateBitstream = state.bitstreams.at(symbol);
                 this->decodeStates[nextState].states[currentState] = stateBitstream;
+                if (decodeState.maximumReadSizeFromBitstream < stateBitstream.size) {
+                    decodeState.maximumReadSizeFromBitstream = stateBitstream.size;
+                }
+            }
+        }
+
+        // * That order the StateBitstream in decreasing based in bitstream size to avoid a false positive
+        //   when comparing it to the read bitstream, which could be based on the expected size.
+        // TODO: Optimize that
+        for (auto &[decodedState, state]: this->decodeStates) {
+            std::vector<std::pair<uint16_t, StateBitstream> >
+                    vectorizedStates(state.states.begin(), state.states.end());
+            std::sort(vectorizedStates.begin(), vectorizedStates.end(),
+                      [](const std::pair<uint16_t, StateBitstream> &a, const std::pair<uint16_t, StateBitstream> &b) {
+                          return a.second.size > b.second.size;
+                      });
+
+            state.states.clear();
+
+            for (const auto &[fst, snd]: vectorizedStates) {
+                state.states[fst] = snd;
             }
         }
     }
@@ -116,27 +141,23 @@ public:
     std::pair<uint16_t, int8_t> decode(const uint16_t currentState, BitstreamReader &reader) {
         const DecodeState &decodeState = this->decodeStates[currentState];
 
-        // Get major N
-        size_t major = 0;
-        for (const auto &[previousState,bitstreamWaited]: decodeState.states) {
-            if (bitstreamWaited.size > major) {
-                major = bitstreamWaited.size;
-            }
-        }
-        if (major == 0) {
-            // A state without a bitstream
+        // A state without a bitstream
+        if (decodeState.maximumReadSizeFromBitstream == 0) {
             auto const &[previousState, _] = *decodeState.states.begin();
             return {previousState, decodeState.symbol};
         }
 
         // Read (only peek) N numbers from bitstream
-        const auto readBitstreams = reader.peek(static_cast<int>(major));
+        const auto readBitstreams = reader.peek(decodeState.maximumReadSizeFromBitstream);
         // For each previous state possible, check if read bitstream is correct to that state
         for (const auto &[previousState, bitstreamWaited]: decodeState.states) {
             const int n = bitstreamWaited.size;
 
+            // Take only size of waited bitstream to avoid bugs with bits which are of
+            const uint8_t read = readBitstreams & ((1U << n) - 1);
+
             // An XOR to compare bitstreams bit-a-bit
-            if ((readBitstreams ^ bitstreamWaited.bitstream) == 0) {
+            if ((read ^ bitstreamWaited.bitstream) == 0) {
                 reader.advance(n);
                 return {previousState, decodeState.symbol};
             }
