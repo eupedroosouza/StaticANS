@@ -14,6 +14,7 @@ set(SOURCES
         source/Lib/EncLib/BinEncoder_simple.cpp
         source/Lib/DecLib/CABACDecoder.cpp
         source/Lib/DecLib/BinDecoder.cpp
+        source/Lib/CommonLib/Context.cpp
         source/Lib/CommonLib/ContextModel.cpp
         source/Lib/CommonLib/ContextModeler.cpp
         source/Lib/CommonLib/TabledANS.h

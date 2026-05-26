@@ -1,10 +1,9 @@
 #pragma once
 #include <cstdint>
-#include <iostream>
+#include <list>
 #include <map>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "TypeDef.h"
 #include "Lib/Utils/Bitstream.h"
@@ -54,11 +53,13 @@ public:
 
 
 class Table {
-    std::map<uint16_t, State> states;
+    std::map<uint16_t, State> states = {};
     std::map<uint16_t, DecodeState> decodeStates = {};
 
 public:
-    explicit Table(const std::initializer_list<State> &states) {
+    Table() = default;
+
+    explicit Table(const std::list<State> &states) {
         for (const State &state: states) {
             this->states[state.state] = state;
         }
@@ -103,10 +104,6 @@ public:
         const uint16_t &nextState = state.nextStates.at(symbol);
         const StateBitstream &bitstream = state.bitstreams.at(symbol);
         writer.write(bitstream.size, bitstream.bitstream);
-        std::cout << "<---->" << std::endl;
-        std::cout << "State: " << std::to_string(currentState) << std::endl;
-        std::cout << "Next state: " << std::to_string(nextState) << std::endl;
-        std::cout << "<---->" << std::endl;
         return nextState;
     }
 
@@ -131,24 +128,19 @@ public:
             auto const &[previousState, _] = *decodeState.states.begin();
             return {previousState, decodeState.symbol};
         }
-        std::cout << "<---->" << std::endl;
-        std::cout << "State: " << std::to_string(currentState) << std::endl;
-        std::cout << "Symbol: " << std::to_string(decodeState.symbol) << std::endl;
-        std::cout << "Major: " << std::to_string(major) << std::endl;
 
         // Read (only peek) N numbers from bitstream
         const auto readBitstreams = reader.peek(static_cast<int>(major));
-        std::cout << "readBitstreams: " << std::to_string(readBitstreams) << std::endl;
         // For each previous state possible, check if read bitstream is correct to that state
         for (const auto &[previousState, bitstreamWaited]: decodeState.states) {
             const int n = bitstreamWaited.size;
 
-            if (readBitstreams & bitstreamWaited.bitstream) {
+            // An XOR to compare bitstreams bit-a-bit
+            if ((readBitstreams ^ bitstreamWaited.bitstream) == 0) {
                 reader.advance(n);
                 return {previousState, decodeState.symbol};
             }
         }
-        std::cout << "<---->" << std::endl;
 
         // Hmmm, is mandatory found a previous state if has a symbols to decode yet, if you are here, check if decodification is correct!
         throw Exception(

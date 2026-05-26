@@ -112,4 +112,8 @@ public:
             refill();
         }
     }
+
+    [[nodiscard]] int getCount() const {
+        return count;
+    }
 };
