@@ -142,7 +142,7 @@ Based on DeepCABAC and NNCodec https://github.com/d-becking/nncodec2
 #include "Lib/EncLib/CABACEncoder.h"  // your header
 #include "Lib/EncLib/BinEncoder_simple.h"
 #include "Lib/CommonLib/ContextModel.h"
-#include "StaticCoder.h"
+#include "deepANS.h"
 #include "Lib/CommonLib/TypeDef.h"
 #include "Lib/DecLib/CABACDecoder.h"
 
@@ -164,6 +164,7 @@ std::string g_modelName;
 bool g_doEncode = false;
 bool g_doDecode = false;
 std::string g_bitstreamFile;
+std::string contextTablePath = "static/tables.dat";
 
 // ============================================================
 // Peak Memory Sampler — mirrors Python psutil RSS sampling
@@ -530,6 +531,10 @@ bool parseArgs(int argc, char* argv[])
     if(args.count("--name")) g_modelName = args["--name"];
     else { std::cerr << "--model name required\n"; return false; }
 
+    if (args.count("--table")) {
+        contextTablePath = args["--table"];
+    }
+
 
     // normalize path
     if(!g_tensorBinDir.empty())
@@ -602,7 +607,12 @@ int main(int argc, char* argv[])
     // ENCODING
     // --------------------------------------------------
     if (g_doEncode){
-        Encoder encoder;
+        if (!std::filesystem::exists(contextTablePath)) {
+            std::cerr << "Not found context tables: " << contextTablePath << "\n";
+            return 1;
+        }
+        Context context = Context::loadContextFromFile(contextTablePath);
+        Encoder encoder(context);
 
         std::cout << "\n=== Encoding Model ===\n";
 
@@ -613,7 +623,7 @@ int main(int argc, char* argv[])
 
         auto encStart = std::chrono::high_resolution_clock::now();
 
-        encoder.initCtxModels(numGtxFlags);
+        // encoder.initCtxModels(numGtxFlags);
         bytestream = encoder.encodeModel(modelTensors);
 
         auto encEnd = std::chrono::high_resolution_clock::now();
@@ -740,53 +750,53 @@ int main(int argc, char* argv[])
         std::cout << "Loaded bitstream: " << size << " bytes\n";
     }
 
-    if(g_doDecode){
-        std::cout << "\n=== Decoding Model ===\n";
-
-        Decoder decoder;
-        std::vector<TensorMeta> decodedModel;
-
-        PeakMemorySampler decSampler;
-        size_t baselineDecMem = getCurrentRSS();          // baseline before decode
-
-        decSampler.start();
-        auto decStart = std::chrono::high_resolution_clock::now();
-
-        decoder.setStream(const_cast<std::vector<uint8_t>&>(bytestream));
-
-        decoder.initCtxModels(numGtxFlags);
-        printf("Start decoding...\n");
-        decoder.decodeModel(decodedModel);
-
-        auto decEnd = std::chrono::high_resolution_clock::now();
-        MemoryStats decMemStats = decSampler.stop(baselineDecMem);
-
-        double decTime = std::chrono::duration<double>(decEnd-decStart).count();
-
-        std::cout << "Decoded tensors: "
-                << decodedModel.size()
-                << "\n";
-
-
-        /// save decoded tensormeta
-        std::string decodedDir = g_modelName + "_decoded";
-        saveDecodedModel(decodedModel, decodedDir);
-
-        uint64_t decodedBytes = 0;
-
-        for(const auto& t : decodedModel)
-        {
-            decodedBytes += t.data.size() * sizeof(int32_t);
-        }
-
-        double decodedMB = decodedBytes / (1024.0 * 1024.0);
-
-        std::cout << "\n========== DECODING SUMMARY ==========\n"
-            << "Decoded size       : " << decodedMB << " MB\n"
-            << "Decoding time      : " << decTime                     << " sec\n"
-            << "Decode speed       : " << decodedMB / decTime          << " MB/s\n";
-        printMemStats("Decode memory:", decMemStats);
-    }
+    // if(g_doDecode){
+    //     std::cout << "\n=== Decoding Model ===\n";
+    //
+    //     Decoder decoder;
+    //     std::vector<TensorMeta> decodedModel;
+    //
+    //     PeakMemorySampler decSampler;
+    //     size_t baselineDecMem = getCurrentRSS();          // baseline before decode
+    //
+    //     decSampler.start();
+    //     auto decStart = std::chrono::high_resolution_clock::now();
+    //
+    //     decoder.setStream(const_cast<std::vector<uint8_t>&>(bytestream));
+    //
+    //     decoder.initCtxModels(numGtxFlags);
+    //     printf("Start decoding...\n");
+    //     decoder.decodeModel(decodedModel);
+    //
+    //     auto decEnd = std::chrono::high_resolution_clock::now();
+    //     MemoryStats decMemStats = decSampler.stop(baselineDecMem);
+    //
+    //     double decTime = std::chrono::duration<double>(decEnd-decStart).count();
+    //
+    //     std::cout << "Decoded tensors: "
+    //             << decodedModel.size()
+    //             << "\n";
+    //
+    //
+    //     /// save decoded tensormeta
+    //     std::string decodedDir = g_modelName + "_decoded";
+    //     saveDecodedModel(decodedModel, decodedDir);
+    //
+    //     uint64_t decodedBytes = 0;
+    //
+    //     for(const auto& t : decodedModel)
+    //     {
+    //         decodedBytes += t.data.size() * sizeof(int32_t);
+    //     }
+    //
+    //     double decodedMB = decodedBytes / (1024.0 * 1024.0);
+    //
+    //     std::cout << "\n========== DECODING SUMMARY ==========\n"
+    //         << "Decoded size       : " << decodedMB << " MB\n"
+    //         << "Decoding time      : " << decTime                     << " sec\n"
+    //         << "Decode speed       : " << decodedMB / decTime          << " MB/s\n";
+    //     printMemStats("Decode memory:", decMemStats);
+    // }
 
 
 

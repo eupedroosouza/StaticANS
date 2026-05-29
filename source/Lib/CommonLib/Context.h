@@ -17,10 +17,15 @@ public:
 
     ~Context() = default;
 
-    Table *getContextTable(const uint8_t ctxId, const TensorType paramType) {
+    Table *getContext(const uint8_t ctxId, const TensorType paramType) {
         const int type = paramType == TensorType::Weight ? 0 : 1;
         return &context[type][ctxId];
     }
 
+    std::array<std::array<Table, 13>, 2>& getContexts() {
+        return  context;
+    }
+
     static Context loadContextFromFile(const std::string &filename);
+
 };

@@ -7,21 +7,24 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(SOURCES
         source/deepANS.cpp
-        source/StaticCoder.cpp
+#        source/StaticCoder.cpp
         source/Lib/Utils/global_logger.cpp
         source/Lib/Utils/Bitstream.h
         source/Lib/EncLib/CABACEncoder.cpp
         source/Lib/EncLib/BinEncoder_simple.cpp
+        source/Lib/EncLib/ANSEncoder.cpp
         source/Lib/DecLib/CABACDecoder.cpp
         source/Lib/DecLib/BinDecoder.cpp
+        source/Lib/DecLib/ANSDecoder.cpp
         source/Lib/CommonLib/Context.cpp
         source/Lib/CommonLib/ContextModel.cpp
         source/Lib/CommonLib/ContextModeler.cpp
         source/Lib/CommonLib/TabledANS.h
-        source/Lib/CommonLib/UniformRangeANS.h
-        source/Lib/Test/test_ans_coding.cpp
+        source/Lib/CommonLib/BinaryEquiprobableANS.h
+        source/Entrypoint.cpp
 )
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
 add_executable(deepANS ${SOURCES})
 target_include_directories(deepANS PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source) # Enable use headers without ../ (like it)
 target_compile_options(deepANS PRIVATE -O2 -Wall -Wextra)
