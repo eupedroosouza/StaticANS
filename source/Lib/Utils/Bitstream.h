@@ -10,7 +10,7 @@ class BitstreamWriter {
 
 public:
     // Using 8 bit bitstream and implemented as stack because of ANS characteristic (decode is inversed of encode)
-    std::stack<uint8_t> bitstream = {};
+    std::vector<uint8_t> bitstream = {};
 
     BitstreamWriter() = default;
 
@@ -29,7 +29,7 @@ public:
             currentBitstream = currentBitstream | (bit << ptr);
 
             if (ptr == 0) {
-                bitstream.push(currentBitstream);
+                bitstream.push_back(currentBitstream);
                 currentBitstream = 0;
                 ptr = 8;
             }
@@ -44,7 +44,7 @@ public:
     uint8_t flush() {
         uint8_t offset = 0;
         if (ptr < 8) {
-            bitstream.push(currentBitstream);
+            bitstream.push_back(currentBitstream);
             offset = ptr;
             currentBitstream = 0;
             ptr = 8;
@@ -62,8 +62,8 @@ class BitstreamReader {
      */
     void refill() {
         while (count <= 24 && !bitstream.empty()) {
-            const uint8_t nextBits = bitstream.top();
-            bitstream.pop();
+            const uint8_t nextBits = bitstream.back();
+            bitstream.pop_back();
             buffer = buffer | (static_cast<uint32_t>(nextBits) << count);
             count += 8;
         }
@@ -71,9 +71,9 @@ class BitstreamReader {
     }
 
 public:
-    std::stack<uint8_t> bitstream;
+    std::vector<uint8_t> bitstream;
 
-    explicit BitstreamReader(const std::stack<uint8_t> &bitstream, const std::uint8_t offset) : bitstream(bitstream) {
+    explicit BitstreamReader(const std::vector<uint8_t> &bitstream, const std::uint8_t offset) : bitstream(bitstream) {
         this->refill();
         if (offset > 0 && offset < 8) {
             this->advance(offset);

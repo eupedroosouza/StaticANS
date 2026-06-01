@@ -264,23 +264,17 @@ void ANSEncoder::encodeWeights(const int32_t *pWeights, const uint32_t numWeight
     encodeWeightsChunks(pWeights, numWeights);
 }
 
-std::vector<uint8_t> ANSEncoder::finishEncoding() {
-    uint8_t offset = writer.flush();
-    std::vector<uint8_t> result;
-    result.emplace_back(equiprobableState);
+std::vector<uint8_t>& ANSEncoder::finishEncoding() {
+    const uint8_t offset = writer.flush();
+    writer.bitstream.push_back(offset);
     for (auto &contextualizedState: contextualizedStates) {
         for (const unsigned short state: contextualizedState) {
             const uint8_t high_byte = (state >> 8) & 0xFF;
             const uint8_t low_byte = state & 0xFF;
-            result.emplace_back(high_byte);
-            result.emplace_back(low_byte);
+            writer.bitstream.push_back(low_byte);
+            writer.bitstream.push_back(high_byte);
         }
     }
-    result.emplace_back(offset);
-    std::stack<uint8_t> cpy = writer.bitstream;
-    while (!cpy.empty()) {
-        result.emplace_back(cpy.top());
-        cpy.pop();
-    }
-    return result;
+    writer.bitstream.push_back(equiprobableState);
+    return writer.bitstream;
 }

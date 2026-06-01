@@ -46,7 +46,7 @@ public:
 
     void encodeWeights(const int32_t *pWeights, uint32_t numWeights);
 
-    std::vector<uint8_t> finishEncoding();
+    std::vector<uint8_t>& finishEncoding();
 
     static constexpr uint32_t MAX_TENSORS_BITS = 12; // allows up to 4096 tensors
     static constexpr uint32_t chunkSize = 2048;

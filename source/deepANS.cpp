@@ -30,6 +30,6 @@ std::vector<uint8_t> Encoder::encodeModel(const std::vector<TensorMeta> &modelTe
     return this->finishEncoding();
 }
 
-std::vector<uint8_t> Encoder::finishEncoding() {
+std::vector<uint8_t>& Encoder::finishEncoding() {
     return encoder.finishEncoding();
 }

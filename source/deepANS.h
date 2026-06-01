@@ -52,7 +52,7 @@ public:
      * Finish encoding (it's mandatory)
      * @return data ready to save
      */
-    std::vector<uint8_t> finishEncoding();
+    std::vector<uint8_t>& finishEncoding();
 };
 
 class Decoder {
