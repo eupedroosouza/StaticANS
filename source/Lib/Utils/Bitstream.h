@@ -71,7 +71,9 @@ class BitstreamReader {
     }
 
 public:
-    std::vector<uint8_t> bitstream;
+    std::vector<uint8_t> bitstream = {};
+
+    BitstreamReader() = default;
 
     explicit BitstreamReader(const std::vector<uint8_t> &bitstream, const std::uint8_t offset) : bitstream(bitstream) {
         this->refill();

@@ -42,6 +42,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef __CONTEXTMODELER__
 #define __CONTEXTMODELER__
 
+#include <cstdint>
+
 #include "TypeDef.h"
 //#include "HdspOpts.h"
 

@@ -56,21 +56,30 @@ void ANSEncoder::encodeWeightBAC(int32_t value, uint8_t k) {
 
         uint32_t remAbsLevel = abs(value) - 1;
         if (abs(value) > 5) {
+            remAbsLevel -= 5;
             encodeAbsRem(remAbsLevel, k);
             encodeBin(1, 12, tensorType);
         } else {
             uint32_t grXFlag = remAbsLevel ? 1 : 0;
+            const uint32_t staticGrXFlag = grXFlag;
             int32_t ctxId = contextModeler.getGtxCtxId(signFlag);
+            const int32_t staticCtxId = ctxId;
             uint32_t numGreaterFlagsCoded = 1;
+            std::stack<std::pair<uint32_t, int32_t>> enc = {};
             while (grXFlag && (numGreaterFlagsCoded < 4)) // TODO: 4? (based only StaticBAC)
             {
                 remAbsLevel--;
                 grXFlag = remAbsLevel ? 1 : 0;
                 ctxId = contextModeler.getGtxCtxId(signFlag);
-                encodeBin(grXFlag, ctxId, tensorType);
+                enc.emplace(grXFlag, ctxId);
                 numGreaterFlagsCoded++;
             }
-            encodeBin(grXFlag, ctxId, tensorType);
+            while (!enc.empty()) {
+                const auto [grXFlagEnc, ctxIdEnc] = enc.top();
+                enc.pop();
+                encodeBin(grXFlagEnc, ctxIdEnc, tensorType);
+            }
+            encodeBin(staticGrXFlag, staticCtxId, tensorType);
             encodeBin(0, 12, tensorType);
         }
 
@@ -100,7 +109,7 @@ void ANSEncoder::encodeAbsRem(const int32_t value, const uint16_t k) {
         msb3 = (value >> (bitwidth - 3)) & 0x1;
         msb4 = (value >> (bitwidth - 4)) & 0x1;
         minusBits += 2;
-    } else {
+    } else if (tensorBitwidth >= TensorBitwidth::BW_16) {
         msb3 = (value >> (bitwidth - 3)) & 0x1;
         msb4 = (value >> (bitwidth - 4)) & 0x1;
         msb5 = (value >> (bitwidth - 5)) & 0x1;
@@ -127,11 +136,11 @@ void ANSEncoder::encodeAbsRem(const int32_t value, const uint16_t k) {
     if (tensorBitwidth == TensorBitwidth::BW_12) {
         encodeBin(msb4, 9, tensorType);
         encodeBin(msb3, 8, tensorType);
-    } else {
+    } else if (tensorBitwidth >= TensorBitwidth::BW_16) {
         encodeBin(msb6, 11, tensorType);
         encodeBin(msb5, 10, tensorType);
-        encodeBin(msb3, 8, tensorType);
         encodeBin(msb4, 9, tensorType);
+        encodeBin(msb3, 8, tensorType);
     }
 
     encodeBin(msb2, 7, tensorType);
@@ -142,10 +151,10 @@ void ANSEncoder::encodeWeightsChunks(const int32_t *pWeights, const uint32_t num
     const uint32_t width = getBitwidthFromEnum(tensorBitwidth);
     const uint32_t numChunks = (numWeights + chunkSize - 1) >> 11;
     std::vector<int32_t> scaledBuf(chunkSize);
-    for (uint32_t c = 0; c < numChunks; c++) {
+    for (auto c = static_cast<int32_t>(numChunks - 1); c >= 0; c--) {
         contextModeler.resetNeighborCtx();
 
-        const uint32_t start = c * chunkSize;
+        const uint32_t start = static_cast<uint32_t>(c) * chunkSize;
         const uint32_t end = std::min(start + chunkSize, numWeights);
         const uint32_t len = end - start;
 
@@ -223,17 +232,15 @@ void ANSEncoder::encodeWeightsChunks(const int32_t *pWeights, const uint32_t num
         const bool skipChunk = (normBPE > 0.98);
 
         if (skipChunk) {
-            for (uint32_t j = end; j > start; j--) {
-                const uint32_t idx = j - 1;
-                iae_v(width, pWeights[idx]);
+            for (auto j = static_cast<int32_t>(end - 1);  j >= static_cast<int32_t>(start); j--) {
+                iae_v(width, pWeights[j]);
             }
             encodeBinEP(1); // skip chunk = true
             continue;
         }
 
-        const uint32_t total = end - start;
-        for (uint32_t i = end; i > start; i--) {
-            const int32_t scaled = scaledBuf[total - (end - i) - 1];
+        for (auto i = static_cast<int32_t>(end - 1); i >= static_cast<int32_t>(start); i--) {
+            const int32_t scaled = scaledBuf[static_cast<uint32_t>(i) - start];
             encodeWeightBAC(scaled, k);
             contextModeler.updateNeighborCtx(scaled);
         }
@@ -249,12 +256,13 @@ void ANSEncoder::encodeWeightsChunks(const int32_t *pWeights, const uint32_t num
 
 void ANSEncoder::encodeTensorHeader(const uint32_t *shape,
                                     const uint32_t numDims, const uint16_t tensorId) {
-    for (uint32_t i = 0; i < numDims; i++) {
+    for (int32_t i = static_cast<int32_t>(numDims - 1); i >= 0; i--) {
         const uint32_t dimSize = shape[i];
         const int bitlen = (dimSize == 0) ? 1 : 32 - __builtin_clz(dimSize);
-        encodeBinsEP(bitlen - 1, 5);
         encodeBinsEP(dimSize, bitlen);
+        encodeBinsEP(bitlen - 1, 5);
     }
+    encodeBinsEP(numDims, 3);
     encodeBinsEP(static_cast<uint32_t>(tensorBitwidth), 3);
     encodeBinEP(static_cast<uint8_t>(tensorType));
     encodeBinsEP(tensorId, MAX_TENSORS_BITS);

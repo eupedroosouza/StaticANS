@@ -4,6 +4,7 @@
 
 #include "Lib/CommonLib/Context.h"
 #include "Lib/CommonLib/TypeDef.h"
+#include "Lib/DecLib/ANSDecoder.h"
 #include "Lib/EncLib/ANSEncoder.h"
 
 class Encoder {
@@ -52,18 +53,16 @@ public:
      * Finish encoding (it's mandatory)
      * @return data ready to save
      */
-    std::vector<uint8_t>& finishEncoding();
+    std::vector<uint8_t> &finishEncoding();
 };
 
 class Decoder {
-    Context context;
-    std::vector<uint8_t> data = {};
+    ANSDecoder decoder;
 
 public:
     Decoder() = default;
 
-    explicit Decoder(const Context &context, const std::vector<uint8_t> &data) : context(context), data(data) {
-    }
+    explicit Decoder(const Context &context, std::vector<uint8_t> &data);
 
     ~Decoder() = default;
 
