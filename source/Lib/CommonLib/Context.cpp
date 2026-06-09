@@ -26,8 +26,10 @@ Context Context::loadContextFromFile(const std::string &filename) {
         std::list<State> states;
         const uint16_t range = static_cast<uint16_t>(2 * total) - 1;
         for (uint16_t state = total; state <= range; state++) {
-            std::map<int8_t, uint16_t> nextStates = {};
-            std::map<int8_t, StateBitstream> bitstreams = {};
+            std::vector<uint16_t> nextStates = {};
+            nextStates.resize(symbolsSize);
+            std::vector<StateBitstream> bitstreams = {};
+            bitstreams.resize(symbolsSize);
             for (uint8_t symbol = 0; symbol < symbolsSize; symbol++) {
                 uint16_t nextState;
                 file.read(reinterpret_cast<char *>(&nextState), sizeof(nextState));
