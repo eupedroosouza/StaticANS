@@ -29,18 +29,14 @@ ANSDecoder::ANSDecoder(const Context &context, std::vector<uint8_t> &bytestream)
 }
 
 uint32_t ANSDecoder::decodeBin(const uint8_t ctxId, const TensorType paramType) {
-    Table *table = context.getContext(ctxId, paramType);
+    const Table *table = context.getContext(ctxId, paramType);
     const auto pType = static_cast<uint8_t>(paramType);
-    const auto [newState, symbol] = table->decode(this->contextualizedStates[pType][ctxId], this->reader);
-    this->contextualizedStates[pType][ctxId] = newState;
-    return symbol;
+    return table->decode(this->contextualizedStates[pType][ctxId], this->reader);
 }
 
 
 uint32_t ANSDecoder::decodeBinEP() {
-    const auto [newState, symbol] = BinaryEquiprobableANS::decode(this->equiprobableState, this->reader);
-    this->equiprobableState = newState;
-    return symbol;
+    return BinaryEquiprobableANS::decode(this->equiprobableState, this->reader);
 }
 
 

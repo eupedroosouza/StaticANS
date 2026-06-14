@@ -21,14 +21,14 @@ public:
      * @param writer the bitstream writer
      * @return  new state (as unsigned 16 bits)
      */
-    static uint8_t encode(uint8_t &currentState, const uint8_t symbol, BitstreamWriter &writer) {
+    static void encode(uint8_t &currentState, const uint8_t symbol, BitstreamWriter &writer) {
         while (currentState >= 2) {
             const auto bit = static_cast<uint8_t>(currentState % 2);
             writer.write(1, bit);
             currentState /= 2;
         }
 
-        return (currentState * 2) + symbol;
+        currentState = (currentState * 2) + symbol;
     }
 
     /**
@@ -37,16 +37,16 @@ public:
      * @param reader the bitstream reader
      * @return a pair with previous state and decoded symbol
      */
-    static std::pair<uint8_t, uint8_t> decode(const uint8_t currentState, BitstreamReader &reader) {
+    static uint8_t decode(uint8_t &currentState, BitstreamReader &reader) {
         const auto symbol = static_cast<int8_t>(currentState % 2);
-        auto previousState = static_cast<uint8_t>(currentState / 2);
+        currentState = static_cast<uint8_t>(currentState / 2);
 
-        while (previousState < 2) {
+        while (currentState < 2) {
             const uint8_t bit = reader.peek(1);
             reader.advance(1);
-            previousState = static_cast<uint8_t>((previousState * 2) + bit);
+            currentState = static_cast<uint8_t>((currentState * 2) + bit);
         }
 
-        return {previousState, symbol};
+        return symbol;
     }
 };

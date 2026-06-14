@@ -113,12 +113,12 @@ public:
      * @param writer the bitstream writer
      * @return new state (as unsigned 16 bits)
      */
-    uint16_t encode(const uint16_t currentState, const int8_t symbol, BitstreamWriter &writer) {
+    void encode(uint16_t &currentState, const int8_t symbol, BitstreamWriter &writer) const {
         const State &state = states[currentState - L];
         const uint16_t &nextState = state.nextStates.at(symbol);
         const StateBitstream &bitstream = state.bitstreams.at(symbol);
         writer.write(bitstream.size, bitstream.bitstream);
-        return nextState;
+        currentState = nextState;
     }
 
     /**
@@ -127,17 +127,18 @@ public:
      * @param reader the bitstream reader
      * @return a pair of previous state and symbol value
      */
-    std::pair<uint16_t, int8_t> decode(const uint16_t currentState, BitstreamReader &reader) {
+    uint8_t decode(uint16_t &currentState, BitstreamReader &reader) const {
         const DecodeState &decodeState = this->decodeStates[currentState - L];
 
         // A state without a bitstream
         if (decodeState.N == 0) {
-            return {decodeState.base, decodeState.symbol};
+            currentState = decodeState.base;
+            return decodeState.symbol;
         }
 
         const auto readBitstreams = reader.peek(decodeState.N);
         reader.advance(decodeState.N);
-        const auto previousState = decodeState.base + readBitstreams;
-        return {previousState, decodeState.symbol};
+        currentState = decodeState.base + readBitstreams;
+        return decodeState.symbol;
     }
 };

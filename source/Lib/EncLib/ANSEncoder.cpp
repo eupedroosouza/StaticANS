@@ -15,14 +15,13 @@ ANSEncoder::ANSEncoder(const Context &context) : context(context) {
 }
 
 void ANSEncoder::encodeBin(const uint8_t bin, const uint8_t ctxId, const TensorType paramType) {
-    Table *table = context.getContext(ctxId, paramType);
+    const Table *table = context.getContext(ctxId, paramType);
     const auto pType = static_cast<uint8_t>(paramType);
-    this->contextualizedStates[pType][ctxId] = table->encode(this->contextualizedStates[pType][ctxId],
-                                                             static_cast<int8_t>(bin), writer);
+    table->encode(this->contextualizedStates[pType][ctxId], static_cast<int8_t>(bin), writer);
 }
 
 void ANSEncoder::encodeBinEP(const uint8_t bin) {
-    this->equiprobableState = BinaryEquiprobableANS::encode(this->equiprobableState, bin, writer);
+    BinaryEquiprobableANS::encode(this->equiprobableState, bin, writer);
 }
 
 void ANSEncoder::encodeBinsEP(const uint32_t bins, const uint32_t numBins) {
