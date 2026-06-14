@@ -64,7 +64,7 @@ void ANSEncoder::encodeWeightBAC(int32_t value, uint8_t k) {
             int32_t ctxId = contextModeler.getGtxCtxId(signFlag);
             const int32_t staticCtxId = ctxId;
             uint32_t numGreaterFlagsCoded = 1;
-            std::stack<std::pair<uint32_t, int32_t>> enc = {};
+            std::stack<std::pair<uint32_t, int32_t> > enc = {};
             while (grXFlag && (numGreaterFlagsCoded < 4)) // TODO: 4? (based only StaticBAC)
             {
                 remAbsLevel--;
@@ -231,17 +231,25 @@ void ANSEncoder::encodeWeightsChunks(const int32_t *pWeights, const uint32_t num
         const bool skipChunk = (normBPE > 0.98);
 
         if (skipChunk) {
-            for (auto j = static_cast<int32_t>(end - 1);  j >= static_cast<int32_t>(start); j--) {
+            for (auto j = static_cast<int32_t>(end - 1); j >= static_cast<int32_t>(start); j--) {
                 iae_v(width, pWeights[j]);
             }
             encodeBinEP(1); // skip chunk = true
             continue;
         }
 
+        auto neighborIdx = static_cast<int32_t>((end - start - 1) - 1);
+        contextModeler.updateNeighborCtx(scaledBuf[neighborIdx]);
         for (auto i = static_cast<int32_t>(end - 1); i >= static_cast<int32_t>(start); i--) {
             const int32_t scaled = scaledBuf[static_cast<uint32_t>(i) - start];
             encodeWeightBAC(scaled, k);
-            contextModeler.updateNeighborCtx(scaled);
+            neighborIdx--;
+            if (neighborIdx < 0) {
+                contextModeler.updateNeighborCtx(0);
+                continue;
+            }
+            contextModeler.updateNeighborCtx(scaledBuf[neighborIdx]);
+
         }
 
         uae_v(2, k);
@@ -271,7 +279,7 @@ void ANSEncoder::encodeWeights(const int32_t *pWeights, const uint32_t numWeight
     encodeWeightsChunks(pWeights, numWeights);
 }
 
-std::vector<uint8_t>& ANSEncoder::finishEncoding() {
+std::vector<uint8_t> &ANSEncoder::finishEncoding() {
     const uint8_t offset = writer.flush();
     writer.bitstream.push_back(offset);
     for (auto &contextualizedState: contextualizedStates) {

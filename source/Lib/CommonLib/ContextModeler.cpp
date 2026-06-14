@@ -59,16 +59,16 @@ void ContextModeler::resetNeighborCtx()
 
 int32_t ContextModeler::getSigCtxId( )
 {
-    //PROFILE_SCOPE("ContextModeler_getSigCtxId", 0);
-    // int32_t ctxId = 0;
-    //
-    // if (neighborWeightVal != 0)
-    // {
-    //     ctxId = neighborWeightVal < 0 ? 1 : 2;
-    // }
-    //
-    // return ctxId;
-    return  1;
+    // PROFILE_SCOPE("ContextModeler_getSigCtxId", 0);
+     int32_t ctxId = 0;
+
+     if (neighborWeightVal != 0)
+     {
+         ctxId = neighborWeightVal < 0 ? 1 : 2;
+     }
+
+     return ctxId;
+    // return  1;
 }
 
 int32_t ContextModeler::getSignFlagCtxId()
