@@ -239,17 +239,15 @@ void ANSEncoder::encodeWeightsChunks(const int32_t *pWeights, const uint32_t num
         }
 
         auto neighborIdx = static_cast<int32_t>((end - start - 1) - 1);
-        contextModeler.updateNeighborCtx(scaledBuf[neighborIdx]);
         for (auto i = static_cast<int32_t>(end - 1); i >= static_cast<int32_t>(start); i--) {
-            const int32_t scaled = scaledBuf[static_cast<uint32_t>(i) - start];
-            encodeWeightBAC(scaled, k);
-            neighborIdx--;
             if (neighborIdx < 0) {
                 contextModeler.updateNeighborCtx(0);
-                continue;
+            } else {
+                contextModeler.updateNeighborCtx(scaledBuf[neighborIdx]);
             }
-            contextModeler.updateNeighborCtx(scaledBuf[neighborIdx]);
-
+            neighborIdx--;
+            const int32_t scaled = scaledBuf[static_cast<uint32_t>(i) - start];
+            encodeWeightBAC(scaled, k);
         }
 
         uae_v(2, k);

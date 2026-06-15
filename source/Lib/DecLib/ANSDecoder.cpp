@@ -123,11 +123,12 @@ void ANSDecoder::decodeWeights(int32_t *pWeights, uint32_t numWeights) {
 }
 
 void ANSDecoder::decodeWeightVal(int32_t &decodedIntVal, const uint8_t k) {
-    const int32_t sigCtx = contextModeler.getSigCtxId();
 
-    uint32_t sigFlag = decodeBin(sigCtx, tensorType); // sig (significant flag)
+    const uint32_t sigFlag = decodeBin(contextModeler.getSigCtxId(), tensorType); // sig (significant flag)
+
+    decodedIntVal = 0;
+
     if (!sigFlag) {
-        decodedIntVal = 0;
         return;
     }
 
