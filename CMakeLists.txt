@@ -21,6 +21,7 @@ set(SOURCES
         source/Lib/CommonLib/ContextModeler.cpp
         source/Lib/CommonLib/TabledANS.h
         source/Lib/CommonLib/BinaryEquiprobableANS.h
+        source/Lib/CommonLib/Worker.cpp
         source/Entrypoint.cpp
 )
 
