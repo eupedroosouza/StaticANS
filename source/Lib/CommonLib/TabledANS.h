@@ -25,13 +25,13 @@ public:
 
 class State {
 public:
-    uint16_t state = 0;
-    std::vector<uint16_t> nextStates = {};
+    uint8_t state = 0;
+    std::vector<uint8_t> nextStates = {};
     std::vector<StateBitstream> bitstreams = {};
 
     State() = default;
 
-    explicit State(const uint16_t state, const std::vector<uint16_t> &nextStates,
+    explicit State(const uint8_t state, const std::vector<uint8_t> &nextStates,
                    const std::vector<StateBitstream> &bitstreams) : state(state), nextStates(nextStates),
                                                                     bitstreams(bitstreams) {
     }
@@ -43,11 +43,11 @@ class DecodeState {
 public:
     std::int8_t symbol = -1;
     std::uint8_t N = 0;
-    std::uint16_t base = 0;
+    std::uint8_t base = 0;
 
     DecodeState() = default;
 
-    explicit DecodeState(const std::int8_t symbol, const std::uint8_t N, const std::uint16_t base) : symbol(symbol),
+    explicit DecodeState(const std::int8_t symbol, const std::uint8_t N, const std::uint8_t base) : symbol(symbol),
         N(N),
         base(base) {
     }
@@ -69,27 +69,27 @@ public:
         // Temporary (.dat needs has an L number)
         L = states.front().state;
         for (const State &state: states) {
-            this->L = std::min(this->L, state.state);
+            this->L = std::min(this->L, static_cast<uint16_t>(state.state));
         }
 
         this->states.resize(L);
         for (const State &state: states) {
-            this->states[state.state - L] = state;
+            this->states[state.state] = state;
         }
 
         this->decodeStates.resize(L);
         for (const auto &state: this->states) {
             for (int8_t symbol = 0; symbol < static_cast<int8_t>(state.nextStates.size()); ++symbol) {
                 const uint16_t &nextState = state.nextStates[symbol];
-                if (state.bitstreams.empty() && this->decodeStates[nextState - L].symbol == -1) {
-                    this->decodeStates[nextState - L] = DecodeState(symbol, 0, state.state);
+                if (state.bitstreams.empty() && this->decodeStates[nextState].symbol == -1) {
+                    this->decodeStates[nextState] = DecodeState(symbol, 0, state.state);
                     continue;
                 }
                 const StateBitstream &stateBitstream = state.bitstreams.at(symbol);
-                if (this->decodeStates[nextState - L].symbol == -1) {
-                    this->decodeStates[nextState - L] = DecodeState(symbol, stateBitstream.size, state.state);
+                if (this->decodeStates[nextState].symbol == -1) {
+                    this->decodeStates[nextState] = DecodeState(symbol, stateBitstream.size, state.state);
                 } else {
-                    DecodeState &decodeState = this->decodeStates[nextState - L];
+                    DecodeState &decodeState = this->decodeStates[nextState];
                     decodeState.base = std::min(decodeState.base, state.state);
                 }
             }
@@ -103,7 +103,7 @@ public:
      * @return the first state
      */
     [[nodiscard]] uint16_t getFirstState() const {
-        return L;
+        return 0;
     }
 
     /**
@@ -114,7 +114,7 @@ public:
      * @return new state (as unsigned 16 bits)
      */
     void encode(uint16_t &currentState, const int8_t symbol, BitstreamWriter &writer) const {
-        const State &state = states[currentState - L];
+        const State &state = states[currentState];
         const uint16_t &nextState = state.nextStates.at(symbol);
         const StateBitstream &bitstream = state.bitstreams.at(symbol);
         writer.write(bitstream.size, bitstream.bitstream);
@@ -128,7 +128,7 @@ public:
      * @return a pair of previous state and symbol value
      */
     uint8_t decode(uint16_t &currentState, BitstreamReader &reader) const {
-        const DecodeState &decodeState = this->decodeStates[currentState - L];
+        const DecodeState &decodeState = this->decodeStates[currentState];
 
         // A state without a bitstream
         if (decodeState.N == 0) {

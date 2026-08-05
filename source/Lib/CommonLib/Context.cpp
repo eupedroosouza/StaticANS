@@ -24,14 +24,14 @@ Context Context::loadContextFromFile(const std::string &filename) {
         uint16_t total;
         file.read(reinterpret_cast<char *>(&total), sizeof(total));
         std::list<State> states;
-        const uint16_t range = static_cast<uint16_t>(2 * total) - 1;
-        for (uint16_t state = total; state <= range; state++) {
-            std::vector<uint16_t> nextStates = {};
+        //const uint16_t range = static_cast<uint16_t>(2 * total) - 1;
+        for (uint16_t state = 0; state < total; state++) {
+            std::vector<uint8_t> nextStates = {};
             nextStates.resize(symbolsSize);
             std::vector<StateBitstream> bitstreams = {};
             bitstreams.resize(symbolsSize);
             for (uint8_t symbol = 0; symbol < symbolsSize; symbol++) {
-                uint16_t nextState;
+                uint8_t nextState;
                 file.read(reinterpret_cast<char *>(&nextState), sizeof(nextState));
                 uint8_t bitstreamSize;
                 file.read(reinterpret_cast<char *>(&bitstreamSize), sizeof(bitstreamSize));
