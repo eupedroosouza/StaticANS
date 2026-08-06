@@ -21,17 +21,17 @@ Context Context::loadContextFromFile(const std::string &filename) {
         file.read(reinterpret_cast<char *>(&id), sizeof(id));
         uint8_t symbolsSize;
         file.read(reinterpret_cast<char *>(&symbolsSize), sizeof(symbolsSize));
-        uint16_t total;
-        file.read(reinterpret_cast<char *>(&total), sizeof(total));
+        uint16_t L;
+        file.read(reinterpret_cast<char *>(&L), sizeof(L));
         std::list<State> states;
-        const uint16_t range = static_cast<uint16_t>(2 * total) - 1;
-        for (uint16_t state = total; state <= range; state++) {
-            std::vector<uint16_t> nextStates = {};
+        // const uint16_t range = static_cast<uint16_t>(2 * L) - 1;
+        for (uint16_t state = 0; state < L; state++) {
+            std::vector<uint8_t> nextStates = {};
             nextStates.resize(symbolsSize);
             std::vector<StateBitstream> bitstreams = {};
             bitstreams.resize(symbolsSize);
             for (uint8_t symbol = 0; symbol < symbolsSize; symbol++) {
-                uint16_t nextState;
+                uint8_t nextState;
                 file.read(reinterpret_cast<char *>(&nextState), sizeof(nextState));
                 uint8_t bitstreamSize;
                 file.read(reinterpret_cast<char *>(&bitstreamSize), sizeof(bitstreamSize));
@@ -44,7 +44,7 @@ Context Context::loadContextFromFile(const std::string &filename) {
             states.emplace_back(state, nextStates, bitstreams);
         }
 
-        const auto table = Table(states);
+        const auto table = Table(L, states);
         ctxTables[type][id] = table;
     }
 

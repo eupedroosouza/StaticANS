@@ -15,11 +15,8 @@ ANSDecoder::ANSDecoder(const Context &context, std::vector<uint8_t> &bytestream)
     bytestream.pop_back();
     for (int i = 1; i >= 0; i--) {
         for (int j = 12; j >= 0; j--) {
-            const uint8_t high_byte = bytestream.back();
+            const uint8_t state = bytestream.back();
             bytestream.pop_back();
-            const uint8_t low_byte = bytestream.back();
-            bytestream.pop_back();
-            const uint16_t state = (static_cast<uint16_t>(high_byte) << 8) | low_byte;
             contextualizedStates[i][j] = state;
         }
     }

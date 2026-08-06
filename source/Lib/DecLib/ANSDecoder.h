@@ -11,7 +11,7 @@ class ANSDecoder {
 
     Context context;
     ContextModeler contextModeler = ContextModeler();
-    uint16_t contextualizedStates[2][13] = {};
+    uint8_t contextualizedStates[2][13] = {};
     uint8_t equiprobableState = 0;
 
     TensorBitwidth tensorBitwidth = {};

@@ -16,7 +16,8 @@ class Table:
 
 
 class TableResult:
-    def __init__(self, table: Table, states: dict[int, list[int]], bitstreams: dict[int, list[tuple[int, int]]]):
+    def __init__(self, total: int, table: Table, states: dict[int, list[int]], bitstreams: dict[int, list[tuple[int, int]]]):
+        self.total = total
         self.table = table
         self.states = states
         self.bitstreams = bitstreams
@@ -64,7 +65,7 @@ def create_table(table: Table) -> TableResult:
     # print(output_bitstreams)
 
     print(f"Generated table {table.type}/{table.id}")
-    return TableResult(table, output_states, output_bitstreams)
+    return TableResult(total, table, output_states, output_bitstreams)
 
 
 def save_table_as_csv(table_result: TableResult, dir_csv: Path):
@@ -134,7 +135,8 @@ def save_tables_as_binary(results: list[TableResult], bin_file: Path | str):
             for state, next_states in table.states.items():
                 bitstream = table.bitstreams[state]
                 for i, next_state in enumerate(next_states):
-                    file.write(struct.pack("<H", next_state))
+                    normalized_state = next_state - table.total
+                    file.write(struct.pack("<B", normalized_state))
                     bs = bitstream[i]
                     file.write(struct.pack("<B", bs[0]))
                     file.write(struct.pack("<B", bs[1]))

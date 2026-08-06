@@ -282,10 +282,11 @@ std::vector<uint8_t> &ANSEncoder::finishEncoding() {
     writer.bitstream.push_back(offset);
     for (auto &contextualizedState: contextualizedStates) {
         for (const unsigned short state: contextualizedState) {
-            const uint8_t high_byte = (state >> 8) & 0xFF;
-            const uint8_t low_byte = state & 0xFF;
-            writer.bitstream.push_back(low_byte);
-            writer.bitstream.push_back(high_byte);
+            //const uint8_t high_byte = (state >> 8) & 0xFF;
+            //const uint8_t low_byte = state & 0xFF;
+            //writer.bitstream.push_back(low_byte);
+            //writer.bitstream.push_back(high_byte);
+            writer.bitstream.push_back(state);
         }
     }
     writer.bitstream.push_back(equiprobableState);
