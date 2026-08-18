@@ -1,9 +1,9 @@
-# deepANS – Neural Network Tensor Compression with Asymmetric Numeral Systems (ANS)
+# StaticANS – Neural Network Tensor Compression with Asymmetric Numeral Systems (ANS)
 
 ## Overview
 
-**deepANS** is a research-oriented tool forked of [StaticBAC](https://github.com/Jiovana/StaticBAC) (a NN tensor compression with Static Binary Arithmetic Coding (StaticBAC)).
-The main target is same of StaticBAC: compress already quantized models in INT8 (preferrably) also  supporting  INT4, to INT32, in steps of 4. But, now using the **Asymmetric Numeral Systems** (ASN) coding, more specific the implementations: range-ANS (rANS) and tabled-ANS (tANS).
+**StaticANS** is a research-oriented tool forked of [StaticBAC](https://github.com/Jiovana/StaticBAC) (a NN tensor compression with Static Binary Arithmetic Coding (StaticBAC)).
+The main target is same of StaticBAC: compress already quantized models in INT8 (preferrably) also  supporting  INT4, to INT32, in steps of 4. But, now using the **Asymmetric Numeral Systems** (ANS) coding, more specific the implementations: range-ANS (rANS) and tabled-ANS (tANS).
 
 The research pipeline:
 
@@ -17,12 +17,13 @@ This framework is designed for:
 - Studying entropy coding efficiency on NN weights
 - Evaluating compression vs. distortion trade-offs
 - Hardware-oriented research (e.g., CABAC-like implementations)
+- Studying and comparing the modern ANS compression algorithm to BAC
 
 ---
 
 ## Features
 
-- **Assymetric Numeral Systems (ANS)** Coding
+- **Asymmetric Numeral Systems (ANS)** Coding
 - Separate **encode / decode modes**
 - Metadata-driven reconstruction
 - Tensor-level statistics and performance reporting
@@ -31,12 +32,13 @@ This framework is designed for:
 
 ## Repository Structure
 
-deepANS/
+```text
+StaticANS/
 │
-├── source/ # C++ source code (encoder/decoder)
-├── python/ # Python preprocessing (tables create & model export & quantization)
+├── source/          # C++ source code (encoder/decoder)
+├── python/          # Python preprocessing (tables create & model export & quantization)
 └── README.md
-
+```
 Main file is **source/Entrypoint.cpp**.
 
 ## Build
@@ -50,26 +52,21 @@ Main file is **source/Entrypoint.cpp**.
 
 #### Python (Model export)
 
-- Python ≥ 3.8
-- Required packages:
-  -- numpy
-  -- torch
-  -- torchvision
-  -- transformers
-  -- tqdm
+- Python ≥ 3.10
+- Required packages: See [requirements.txt](python/requirements.txt).
 
 ### Building
 
 ```bash
 git clone <repo_url>
-cd deepANS
+cd StaticANS
 mkdir build
 cd build
 cmake ..
 cmake --build .
 ```
 
-This generates the executable (e.g., deepANS).
+This generates the executable (e.g., StaticANS).
 
 ### Python: Export and Quantize Model
 
@@ -89,15 +86,17 @@ python create_meta.py \
 ```
 
 Output:
+```text
 models/resnet50/
 ├── binaries/
 │   ├── layer1.weight.bin
 │   ├── layer1.bias.bin
 │   └── ...
 └── tensor.meta
+```
 
 ## Running the Codec
-
+[StaticANS.h](source/StaticANS.h)
 The codec supports:
 
 - Encoding only
@@ -107,7 +106,7 @@ The codec supports:
 **Only Encode**
 
 ```shell
-./deepANS \
+./StaticANS \
     --encode \
     --binaries ./models/resnet50/binaries \
     --meta ./models/resnet50/tensor.meta \
@@ -117,7 +116,7 @@ The codec supports:
 **Only Decode**
 
 ```shell
-./deepANS \
+./StaticANS \
     --decode \
     --bitstream output.bin \
     --out_dir ./decoded_model
@@ -126,7 +125,7 @@ The codec supports:
 **Encode + Decode**
 
 ```shell
-./deepANS \
+./StaticANS \
     --encode --decode \
     --binaries ./models/resnet50/binaries \
     --meta ./models/resnet50/tensor.meta \
@@ -138,11 +137,13 @@ The codec supports:
 
 The tensor.meta file describes all tensors:
 
+```text
 numTensors N
 
 id name type bitwidth dims shape... qstep
-Example
-0 layer1.weight weight 8 4 64 3 7 7 0.0231
+```
+Example:\
+``0 layer1.weight weight 8 4 64 3 7 7 0.0231``
 
 This enables:
 
@@ -152,29 +153,28 @@ This enables:
 
 ### Quantization Strategy
 
-Weights → 8-bit optimal uniform quantization
-Bias / other tensors → 12-bit quantization
-Small tensors (<32 elements) → higher precision
-Buffers → stored as raw int32 (no quantization)
+**Weights** → 8-bit optimal uniform quantization\
+**Bias / other tensors** → 12-bit quantization\
+**Small tensors (<32 elements)** → higher precision\
+**Buffers** → stored as raw int32 (no quantization)
 
 Quantization step (qstep) is optimized via:
-
-Golden-section search
-Mean squared error (MSE) minimization
-Performance Metrics
+- Golden-section search
+- Mean squared error (MSE) minimization
+- Performance Metrics
 
 ## The tool reports:
 
-Encoding time
-Decoding time
-Compression ratio
-Entropy (bits/symbol)
-Throughput (MB/s)
+- Encoding time
+- Decoding time
+- Compression ratio
+- Entropy (bits/symbol)
+- Throughput (MB/s)
 
 ### Notes
 
-Tensor names are preserved to simplify reconstruction
-Minimal filename sanitization is recommended (/ and \ replaced) - in create_meta
+Tensor names are preserved to simplify reconstruction\
+Minimal filename sanitization is recommended (/ and \ replaced) - in create_meta\
 Decoding reconstructs quantized tensors (not original float values)
 
 ### Future Work
@@ -184,10 +184,3 @@ Decoding reconstructs quantized tensors (not original float values)
 * Parallel chunk processing to speed up encoder, also important for hardware implementation.
 * Change BAC to ANS
 
-### Acknowledgements
-
-This project builds on concepts from:
-
-Arithmetic coding (CABAC)
-Neural network compression - NNCodec and DeepCABAC
-PyTorch / HuggingFace ecosystems

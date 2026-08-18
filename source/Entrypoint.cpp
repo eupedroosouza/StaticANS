@@ -142,7 +142,7 @@ Based on DeepCABAC and NNCodec https://github.com/d-becking/nncodec2
 #include "Lib/EncLib/CABACEncoder.h"  // your header
 #include "Lib/EncLib/BinEncoder_simple.h"
 #include "Lib/CommonLib/ContextModel.h"
-#include "deepANS.h"
+#include "StaticANS.h"
 #include "Lib/CommonLib/TypeDef.h"
 #include "Lib/DecLib/CABACDecoder.h"
 
