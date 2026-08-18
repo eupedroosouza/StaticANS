@@ -132,8 +132,7 @@ public:
             return decodeState.symbol;
         }
 
-        const auto readBitstreams = reader.peek(decodeState.N);
-        reader.advance(decodeState.N);
+        const auto readBitstreams = reader.advance(decodeState.N);
         currentState = decodeState.base + readBitstreams;
         return decodeState.symbol;
     }

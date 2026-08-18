@@ -42,8 +42,7 @@ public:
         currentState = static_cast<uint8_t>(currentState / 2);
 
         while (currentState < 2) {
-            const uint8_t bit = reader.peek(1);
-            reader.advance(1);
+            const uint8_t bit = reader.advance(1);
             currentState = static_cast<uint8_t>((currentState * 2) + bit);
         }
 

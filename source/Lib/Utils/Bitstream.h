@@ -83,36 +83,29 @@ public:
     }
 
     /**
-     * Peek an n bits (just to view, how to check which state to go)
-     * @param n number of bits
-     * @return bits of bitstream
-     */
-    uint8_t peek(const int n) {
-        if (n > 8) {
-            throw Exception("Invalid peek n bits");
-        }
-        if (count < n) {
-            this->refill();
-        }
-        const uint32_t mask = (1U << n) - 1;
-        return buffer & mask;
-    }
-
-    /**
      * Advance (remove) n bits from bitstream
      * @param n number on bits
      */
-    void advance(const int n) {
+    uint8_t advance(const int n) {
+        if (n > 8) {
+            throw Exception("Invalid peek n bits");
+        }
+        
         if (count < n) {
             this->refill();
+
+            if (count < n) {
+                throw std::runtime_error("Bitstream underflow (not has " + std::to_string(n) + " bits to read)");
+            }
         }
+
+        const uint32_t mask = (1U << n) - 1;
+        const uint32_t data = buffer & mask;
 
         buffer = buffer >> n;
         count -= n;
 
-        if (count <= 24) {
-            refill();
-        }
+        return data;
     }
 
     [[nodiscard]] int getCount() const {
