@@ -4,6 +4,18 @@
 #include <stack>
 #include <vector>
 
+static constexpr uint8_t BIT_MASK[9] = {
+    0b00000000, // 0 bits
+    0b00000001, // 1 bit
+    0b00000011, // 2 bits
+    0b00000111, // 3 bits
+    0b00001111, // 4 bits
+    0b00011111, // 5 bits
+    0b00111111, // 6 bits
+    0b01111111, // 7 bits
+    0b11111111  // 8 bits
+};
+
 class BitstreamWriter {
     uint8_t ptr = 8;
     uint8_t currentBitstream = 0;
@@ -22,11 +34,15 @@ public:
      * @param bits bitstream (0bXXX)
      */
     void write(const uint8_t size, const uint8_t bits) {
-        for (int i = size - 1; i >= 0; i--) {
-            const uint8_t bit = (bits >> i) & 1;
+        uint8_t count = size;
+        while (count > 0) {
+            const uint8_t sizeToWrite = std::min(count, ptr);
+            count -= sizeToWrite;
 
-            ptr--;
-            currentBitstream = currentBitstream | (bit << ptr);
+            const uint8_t bitsToWrite = (bits >> count) & BIT_MASK[size];
+            currentBitstream = currentBitstream | (bitsToWrite << (ptr - sizeToWrite));
+
+            ptr -= sizeToWrite;
 
             if (ptr == 0) {
                 bitstream.push_back(currentBitstream);
@@ -54,17 +70,17 @@ public:
 };
 
 class BitstreamReader {
-    uint32_t buffer = 0;
+    uint64_t buffer = 0;
     int count = 0;
 
     /**
      * Load the buffer with 4 bitstream
      */
     void refill() {
-        while (count <= 24 && !bitstream.empty()) {
+        while (count <= 56 && !bitstream.empty()) {
             const uint8_t nextBits = bitstream.back();
             bitstream.pop_back();
-            buffer = buffer | (static_cast<uint32_t>(nextBits) << count);
+            buffer = buffer | (static_cast<uint64_t>(nextBits) << count);
             count += 8;
         }
 
@@ -87,20 +103,19 @@ public:
      * @param n number on bits
      */
     uint8_t advance(const int n) {
-        if (n > 8) {
-            throw Exception("Invalid peek n bits");
-        }
+        //if (n > 8) {
+        //    throw std::runtime_error("Invalid peek n bits");
+        //}
         
         if (count < n) {
             this->refill();
 
-            if (count < n) {
-                throw std::runtime_error("Bitstream underflow (not has " + std::to_string(n) + " bits to read)");
-            }
+            //if (count < n) {
+            //    throw std::runtime_error("Bitstream underflow (does not have " + std::to_string(n) + " bits to read)");
+            //}
         }
 
-        const uint32_t mask = (1U << n) - 1;
-        const uint32_t data = buffer & mask;
+        const uint32_t data = buffer & BIT_MASK[n];
 
         buffer = buffer >> n;
         count -= n;
