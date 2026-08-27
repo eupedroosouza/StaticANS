@@ -6,22 +6,16 @@
 
 ANSEncoder::ANSEncoder(const Context &context) : context(context) {
     // Initialize states with first states.
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 13; j++) {
-            contextualizedStates[i][j] = this->context.getContext(j, static_cast<TensorType>(i))->getFirstState();
-        }
-    }
-    this->equiprobableState = BinaryEquiprobableANS::getFirstState();
+    this->state = 0;
 }
 
 void ANSEncoder::encodeBin(const uint8_t bin, const uint8_t ctxId, const TensorType paramType) {
     const Table *table = context.getContext(ctxId, paramType);
-    const auto pType = static_cast<uint8_t>(paramType);
-    table->encode(this->contextualizedStates[pType][ctxId], static_cast<int8_t>(bin), writer);
+    table->encode(this->state, static_cast<int8_t>(bin), writer);
 }
 
 void ANSEncoder::encodeBinEP(const uint8_t bin) {
-    BinaryEquiprobableANS::encode(this->equiprobableState, bin, writer);
+    writer.write(1, bin);
 }
 
 void ANSEncoder::encodeBinsEP(const uint32_t bins, const uint32_t numBins) {
@@ -280,15 +274,6 @@ void ANSEncoder::encodeWeights(const int32_t *pWeights, const uint32_t numWeight
 std::vector<uint8_t> &ANSEncoder::finishEncoding() {
     const uint8_t offset = writer.flush();
     writer.bitstream.push_back(offset);
-    for (auto &contextualizedState: contextualizedStates) {
-        for (const unsigned short state: contextualizedState) {
-            //const uint8_t high_byte = (state >> 8) & 0xFF;
-            //const uint8_t low_byte = state & 0xFF;
-            //writer.bitstream.push_back(low_byte);
-            //writer.bitstream.push_back(high_byte);
-            writer.bitstream.push_back(state);
-        }
-    }
-    writer.bitstream.push_back(equiprobableState);
+    writer.bitstream.push_back(state);
     return writer.bitstream;
 }

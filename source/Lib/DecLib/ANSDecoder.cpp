@@ -5,21 +5,9 @@
 
 ANSDecoder::ANSDecoder(const Context &context, std::vector<uint8_t> &bytestream) {
     this->context = context;
-    // Recovery last states
-    // const uint8_t ep_high_byte = bytestream.back();
-    // bytestream.pop_back();
-    // const uint8_t ep_low_byte = bytestream.back();
-    // bytestream.pop_back();
-    // this->equiprobableState = (static_cast<uint16_t>(ep_high_byte) << 8) | ep_low_byte;
-    this->equiprobableState = bytestream.back();
+    // Recovery last state
+    this->state = bytestream.back();
     bytestream.pop_back();
-    for (int i = 1; i >= 0; i--) {
-        for (int j = 12; j >= 0; j--) {
-            const uint8_t state = bytestream.back();
-            bytestream.pop_back();
-            contextualizedStates[i][j] = state;
-        }
-    }
     const uint8_t offset = bytestream.back();
     bytestream.pop_back();
     this->reader = BitstreamReader(bytestream, offset);
@@ -27,13 +15,12 @@ ANSDecoder::ANSDecoder(const Context &context, std::vector<uint8_t> &bytestream)
 
 uint32_t ANSDecoder::decodeBin(const uint8_t ctxId, const TensorType paramType) {
     const Table *table = context.getContext(ctxId, paramType);
-    const auto pType = static_cast<uint8_t>(paramType);
-    return table->decode(this->contextualizedStates[pType][ctxId], this->reader);
+    return table->decode(this->state, this->reader);
 }
 
 
 uint32_t ANSDecoder::decodeBinEP() {
-    return BinaryEquiprobableANS::decode(this->equiprobableState, this->reader);
+    return reader.advance(1);
 }
 
 

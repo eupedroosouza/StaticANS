@@ -71,7 +71,7 @@ public:
 
 class BitstreamReader {
     uint64_t buffer = 0;
-    int count = 0;
+    uint32_t count = 0;
 
     /**
      * Load the buffer with 4 bitstream
@@ -102,11 +102,7 @@ public:
      * Advance (remove) n bits from bitstream
      * @param n number on bits
      */
-    uint8_t advance(const int n) {
-        //if (n > 8) {
-        //    throw std::runtime_error("Invalid peek n bits");
-        //}
-        
+    uint32_t advance(const uint32_t n) {
         if (count < n) {
             this->refill();
 
@@ -115,15 +111,12 @@ public:
             //}
         }
 
-        const uint32_t data = buffer & BIT_MASK[n];
+        const uint32_t mask = (1U << n) - 1;
+        const uint32_t data = buffer & mask;
 
         buffer = buffer >> n;
         count -= n;
 
         return data;
-    }
-
-    [[nodiscard]] int getCount() const {
-        return count;
     }
 };

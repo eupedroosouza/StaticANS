@@ -28,3 +28,12 @@ add_executable(StaticANS ${SOURCES})
 target_include_directories(StaticANS PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source) # Enable use headers without ../ (like it)
 target_compile_options(StaticANS PRIVATE -O2 -Wall -Wextra)
 target_link_options(StaticANS PRIVATE -static -static-libgcc -static-libstdc++)
+
+# enable Profiler
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(StaticANS PRIVATE
+            $<$<CONFIG:RelWithDebInfo,Debug>:-fno-omit-frame-pointer>
+            -Wall
+            -Wextra
+    )
+endif()
