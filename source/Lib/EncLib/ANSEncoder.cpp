@@ -6,12 +6,17 @@
 
 ANSEncoder::ANSEncoder(const Context &context) : context(context) {
     // Initialize states with first states.
-    this->state = 0;
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 13; j++) {
+            contextualizedStates[i][j] = this->context.getContext(j, static_cast<TensorType>(i))->getFirstState();
+        }
+    }
 }
 
 void ANSEncoder::encodeBin(const uint8_t bin, const uint8_t ctxId, const TensorType paramType) {
     const Table *table = context.getContext(ctxId, paramType);
-    table->encode(this->state, static_cast<int8_t>(bin), writer);
+    const auto pType = static_cast<uint8_t>(paramType);
+    table->encode(this->contextualizedStates[pType][ctxId], static_cast<int8_t>(bin), writer);
 }
 
 void ANSEncoder::encodeBinEP(const uint8_t bin) {
@@ -274,6 +279,10 @@ void ANSEncoder::encodeWeights(const int32_t *pWeights, const uint32_t numWeight
 std::vector<uint8_t> &ANSEncoder::finishEncoding() {
     const uint8_t offset = writer.flush();
     writer.bitstream.push_back(offset);
-    writer.bitstream.push_back(state);
+    for (auto &contextualizedState: contextualizedStates) {
+        for (const uint8_t state : contextualizedState) {
+            writer.bitstream.push_back(state);
+        }
+    }
     return writer.bitstream;
 }

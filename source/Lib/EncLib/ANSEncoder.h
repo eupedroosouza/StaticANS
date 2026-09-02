@@ -7,7 +7,7 @@
 class ANSEncoder {
     Context context;
     ContextModeler contextModeler = ContextModeler();
-    uint8_t state = 0;
+    uint8_t contextualizedStates[2][13] = {};
     BitstreamWriter writer = BitstreamWriter();
 
     TensorBitwidth tensorBitwidth = {};
