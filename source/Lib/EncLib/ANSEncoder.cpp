@@ -44,6 +44,8 @@ void ANSEncoder::uae_v(const uint8_t bitwidth, const uint32_t value) {
     encodeBinsEP(value, bitwidth);
 }
 
+
+
 void ANSEncoder::encodeWeightBAC(int32_t value, uint8_t k) {
     const uint32_t sigFlag = value != 0 ? 1 : 0;
     const int32_t sigCtx = contextModeler.getSigCtxId();
@@ -63,19 +65,19 @@ void ANSEncoder::encodeWeightBAC(int32_t value, uint8_t k) {
             int32_t ctxId = contextModeler.getGtxCtxId(signFlag);
             const int32_t staticCtxId = ctxId;
             uint32_t numGreaterFlagsCoded = 1;
-            std::stack<std::pair<uint32_t, int32_t> > enc = {};
+            std::pair<uint32_t, int32_t> enc[3];
+            int encPtr = 0;
             while (grXFlag && (numGreaterFlagsCoded < 4)) // TODO: 4? (based only StaticBAC)
             {
                 remAbsLevel--;
                 grXFlag = remAbsLevel ? 1 : 0;
                 ctxId = contextModeler.getGtxCtxId(signFlag);
-                enc.emplace(grXFlag, ctxId);
+                enc[encPtr++] = {grXFlag, ctxId};
                 numGreaterFlagsCoded++;
             }
-            while (!enc.empty()) {
-                const auto [grXFlagEnc, ctxIdEnc] = enc.top();
-                enc.pop();
-                encodeBin(grXFlagEnc, ctxIdEnc, tensorType);
+            for (int i = encPtr - 1; i >= 0; i--) {
+                const auto [e_grXFlag, e_ctxId] = enc[i];
+                encodeBin(e_grXFlag, e_ctxId, tensorType);
             }
             encodeBin(staticGrXFlag, staticCtxId, tensorType);
             encodeBin(0, 12, tensorType);
