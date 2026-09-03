@@ -62,7 +62,7 @@ class Decoder {
 public:
     Decoder() = default;
 
-    explicit Decoder(const Context &context, std::vector<uint8_t> &data);
+    explicit Decoder(const Context &context, std::vector<uint8_t> data);
 
     ~Decoder() = default;
 

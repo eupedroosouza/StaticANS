@@ -755,7 +755,7 @@ int main(int argc, char* argv[])
     if(g_doDecode){
         std::cout << "\n=== Decoding Model ===\n";
 
-        Decoder decoder(context, const_cast<std::vector<uint8_t>&>(bytestream));
+        Decoder decoder(context, std::move(bytestream));
         std::vector<TensorMeta> decodedModel;
 
         PeakMemorySampler decSampler;

@@ -1,0 +1,4 @@
+numTensors 159
+
+0 transformer.tokens_embed.weight weight 8 2 40478 768 0.006648217384012084
+1 transformer.positions_embed.weight weight 8 2 512 768 0.005301701577965633

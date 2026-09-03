@@ -91,7 +91,7 @@ public:
 
     BitstreamReader() = default;
 
-    explicit BitstreamReader(const std::vector<uint8_t> &bitstream, const std::uint8_t offset) : bitstream(bitstream) {
+    explicit BitstreamReader(std::vector<uint8_t> bs, const std::uint8_t offset) : bitstream(std::move(bs)) {
         this->refill();
         if (offset > 0 && offset < 8) {
             this->advance(offset);

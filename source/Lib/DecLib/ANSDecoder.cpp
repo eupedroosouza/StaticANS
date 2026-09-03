@@ -3,7 +3,7 @@
 #include "Lib/CommonLib/BinaryEquiprobableANS.h"
 #include "Lib/EncLib/ANSEncoder.h"
 
-ANSDecoder::ANSDecoder(const Context &context, std::vector<uint8_t> &bytestream) {
+ANSDecoder::ANSDecoder(const Context &context, std::vector<uint8_t> bytestream) {
     this->context = context;
     // Recovery last state
     for (int i = 1; i >= 0; i--) {
@@ -15,7 +15,7 @@ ANSDecoder::ANSDecoder(const Context &context, std::vector<uint8_t> &bytestream)
     }
     const uint8_t offset = bytestream.back();
     bytestream.pop_back();
-    this->reader = BitstreamReader(bytestream, offset);
+    this->reader = BitstreamReader(std::move(bytestream), offset);
 }
 
 uint32_t ANSDecoder::decodeBin(const uint8_t ctxId, const TensorType paramType) {

@@ -31,7 +31,7 @@ class ANSDecoder {
 public:
     ANSDecoder() = default;
 
-    explicit ANSDecoder(const Context &context, std::vector<uint8_t> &bytestream);
+    explicit ANSDecoder(const Context &context, std::vector<uint8_t> bytestream);
 
     ~ANSDecoder() = default;
 

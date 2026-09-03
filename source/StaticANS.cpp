@@ -40,8 +40,8 @@ std::vector<uint8_t> &Encoder::finishEncoding() {
     return encoder.finishEncoding();
 }
 
-Decoder::Decoder(const Context &context, std::vector<uint8_t> &data) {
-    this->decoder = ANSDecoder(context, data);
+Decoder::Decoder(const Context &context, std::vector<uint8_t> data) {
+    this->decoder = ANSDecoder(context, std::move(data));
 }
 
 int32_t Decoder::iae_v(const uint8_t bitwidth) {
