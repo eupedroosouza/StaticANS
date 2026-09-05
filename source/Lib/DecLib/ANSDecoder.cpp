@@ -31,12 +31,7 @@ uint32_t ANSDecoder::decodeBinEP() {
 
 
 uint32_t ANSDecoder::decodeBinsEP(const uint32_t numBins) {
-    uint32_t num = 0;
-    for (uint32_t pos = 0; pos < numBins; pos++) {
-        const uint32_t bit = decodeBinEP();
-        num = num | (bit << pos);
-    }
-    return num;
+    return reader.advance(numBins);
 }
 
 int32_t ANSDecoder::iae_v(const uint8_t bitwidth) {

@@ -1,6 +1,7 @@
 #pragma once
 #include <bitset>
 #include <cstdint>
+#include <iostream>
 #include <stack>
 #include <vector>
 
@@ -33,13 +34,13 @@ public:
      * @param size size of bitstream
      * @param bits bitstream (0bXXX)
      */
-    void write(const uint8_t size, const uint8_t bits) {
+    void write(const uint8_t size, const uint32_t bits) {
         uint8_t count = size;
         while (count > 0) {
             const uint8_t sizeToWrite = std::min(count, ptr);
             count -= sizeToWrite;
 
-            const uint8_t bitsToWrite = (bits >> count) & BIT_MASK[size];
+            const uint8_t bitsToWrite = (bits >> count) & BIT_MASK[sizeToWrite];
             currentBitstream = currentBitstream | (bitsToWrite << (ptr - sizeToWrite));
 
             ptr -= sizeToWrite;
@@ -105,10 +106,6 @@ public:
     uint32_t advance(const uint32_t n) {
         if (count < n) {
             this->refill();
-
-            //if (count < n) {
-            //    throw std::runtime_error("Bitstream underflow (does not have " + std::to_string(n) + " bits to read)");
-            //}
         }
 
         const uint32_t mask = (1U << n) - 1;

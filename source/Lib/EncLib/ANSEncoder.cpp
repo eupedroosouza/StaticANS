@@ -26,13 +26,7 @@ void ANSEncoder::encodeBinEP(const uint8_t bin) {
 void ANSEncoder::encodeBinsEP(const uint32_t bins, const uint32_t numBins) {
     if (numBins < 32)
         CHECK(bins >= ( 1u << numBins ), printf( "%i can not be coded with %i EP-Bins\n", bins, numBins ))
-
-    int remBins = static_cast<int>(numBins) - 1;
-    while (remBins >= 0) {
-        const uint32_t bit = (bins >> remBins) & 1; // Shift to make the remBin the lsb and take lsb
-        encodeBinEP(bit); // Encode
-        remBins--;
-    }
+    writer.write(numBins, bins);
 }
 
 void ANSEncoder::iae_v(const uint8_t bitwidth, const int32_t value) {

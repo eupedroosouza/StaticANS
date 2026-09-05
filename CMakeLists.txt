@@ -26,14 +26,13 @@ set(SOURCES
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
 add_executable(StaticANS ${SOURCES})
 target_include_directories(StaticANS PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source) # Enable use headers without ../ (like it)
-target_compile_options(StaticANS PRIVATE -O2 -Wall -Wextra)
+target_compile_options(StaticANS PRIVATE -Wall -Wextra)
 target_link_options(StaticANS PRIVATE -static -static-libgcc -static-libstdc++)
 
-# enable Profiler
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(StaticANS PRIVATE
-            $<$<CONFIG:RelWithDebInfo,Debug>:-fno-omit-frame-pointer>
-            -Wall
-            -Wextra
-    )
+if(CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g3 -fno-omit-frame-pointer -DNDEBUG")
+endif()
+
+if(CMAKE_BUILD_TYPE MATCHES Release)
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 endif()
